@@ -10,6 +10,8 @@ interface ProgressDisplayProps {
   remainingBudget: number;
   percentageUsed: number;
   expensesByCategory: Expense[];
+  /** When true, only category breakdown (budget summary lives in HomeBudgetPanel). */
+  categoriesOnly?: boolean;
 }
 
 const categoryColors: Record<string, string> = {
@@ -27,6 +29,7 @@ export function ProgressDisplay({
   remainingBudget,
   percentageUsed,
   expensesByCategory,
+  categoriesOnly = false,
 }: ProgressDisplayProps) {
   const { formatCurrency } = useSettings();
 
@@ -46,6 +49,7 @@ export function ProgressDisplay({
   const pct = Math.min(percentageUsed, 100);
 
   if (monthlyGoal === 0) {
+    if (categoriesOnly) return null;
     return (
       <Card className="border-2 border-dashed">
         <CardContent className="pt-6">
@@ -58,6 +62,57 @@ export function ProgressDisplay({
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (categoriesOnly) {
+    return (
+      <div>
+        {chartData.length > 0 ? (
+          <Card className="border-slate-200/90 shadow-md dark:border-slate-800">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <PieChart className="h-5 w-5 text-emerald-600" />
+                <CardTitle>By category</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4 h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPie>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={70}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  </RechartsPie>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="space-y-2">
+                {chartData.map((item) => (
+                  <div key={item.name} className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-sm">{item.name}</span>
+                    </div>
+                    <span className="text-sm font-bold">{formatCurrency(item.value)}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+      </div>
     );
   }
 

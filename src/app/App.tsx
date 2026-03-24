@@ -3,7 +3,7 @@ import { GoalSetting } from './components/GoalSetting';
 import { BankConnection } from './components/BankConnection';
 import { ProgressDisplay } from './components/ProgressDisplay';
 import { PointsDisplay } from './components/PointsDisplay';
-import { MonthlySpendingChart } from './components/MonthlySpendingChart';
+import { HomeBudgetPanel } from './components/HomeBudgetPanel';
 import { ClaimPointsCard } from './components/ClaimPointsCard';
 import { Store } from './components/Store';
 import { AppSettings } from './components/AppSettings';
@@ -16,6 +16,7 @@ import { Button } from './components/ui/button';
 import { Card, CardContent } from './components/ui/card';
 import { toast } from 'sonner';
 import { Toaster } from './components/ui/sonner';
+import { getBudgetTierInfo, IMPACT_POINTS_CLAIM_KEY } from './lib/impactPoints';
 
 
 export interface Expense {
@@ -121,6 +122,10 @@ function AppContent() {
   
   const [friendCount] = useState(5); // Mock friend count
 
+  const [claimedImpactMonth, setClaimedImpactMonth] = useState(() => {
+    return localStorage.getItem(IMPACT_POINTS_CLAIM_KEY) || '';
+  });
+
   useEffect(() => { localStorage.setItem('monthlyGoal', monthlyGoal.toString()); }, [monthlyGoal]);
   useEffect(() => { localStorage.setItem('expenses', JSON.stringify(expenses)); }, [expenses]);
   useEffect(() => { localStorage.setItem('totalPoints', totalPoints.toString()); }, [totalPoints]);
@@ -141,7 +146,12 @@ function AppContent() {
   const remainingBudget = monthlyGoal - totalSpent;
   const percentageUsed = monthlyGoal > 0 ? (totalSpent / monthlyGoal) * 100 : 0;
   const savedAmount = remainingBudget > 0 ? remainingBudget : 0;
-  const potentialPoints = Math.floor(savedAmount / 10);
+  const budgetTier = getBudgetTierInfo(percentageUsed);
+  const potentialPoints = monthlyGoal > 0 ? budgetTier.points : 0;
+  const monthClaimKey = `${currentYear}-${currentMonth}`;
+  const claimedThisMonth = claimedImpactMonth === monthClaimKey;
+  const canClaimImpactPoints =
+    monthlyGoal > 0 && potentialPoints > 0 && !claimedThisMonth;
 
   const deleteExpense = (id: string) => setExpenses(expenses.filter(e => e.id !== id));
 
@@ -157,10 +167,11 @@ function AppContent() {
   };
 
   const claimPoints = () => {
-    if (potentialPoints > 0) {
-      setTotalPoints((prev) => prev + potentialPoints);
-      toast.success(`+${potentialPoints} impact points claimed`);
-    }
+    if (!canClaimImpactPoints) return;
+    setTotalPoints((prev) => prev + potentialPoints);
+    localStorage.setItem(IMPACT_POINTS_CLAIM_KEY, monthClaimKey);
+    setClaimedImpactMonth(monthClaimKey);
+    toast.success(`+${potentialPoints} impact points claimed`);
   };
 
   const handleRedeem = (cost: number) => {
@@ -210,7 +221,7 @@ function AppContent() {
       <button
         type="button"
         onClick={() => setActiveTab('settings')}
-        className="absolute left-4 top-[max(0.25rem,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/45 bg-white/20 text-white shadow-md backdrop-blur-md transition hover:bg-white/30"
+        className="absolute left-4 top-[max(0.85rem,calc(env(safe-area-inset-top)+0.35rem))] z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/45 bg-white/20 text-white shadow-md backdrop-blur-md transition hover:bg-white/30"
         aria-label="Profile"
       >
         <User className="h-5 w-5" strokeWidth={2} />
@@ -224,13 +235,20 @@ function AppContent() {
       />
     </div>
     <div className="px-4 space-y-4">
-    <MonthlySpendingChart expenses={expenses} monthlyGoal={monthlyGoal} />
+    <HomeBudgetPanel
+      expenses={expenses}
+      monthlyGoal={monthlyGoal}
+      totalSpent={totalSpent}
+      remainingBudget={remainingBudget}
+      percentageUsed={percentageUsed}
+    />
     <ProgressDisplay
       monthlyGoal={monthlyGoal}
       totalSpent={totalSpent}
       remainingBudget={remainingBudget}
       percentageUsed={percentageUsed}
       expensesByCategory={thisMonthExpenses}
+      categoriesOnly
     />
     </div>
   </div>
@@ -276,8 +294,12 @@ function AppContent() {
         {activeTab === 'finance' && (
           <div className="space-y-6 px-4 pt-4">
             <ClaimPointsCard
+              tier={budgetTier}
+              percentageUsed={percentageUsed}
+              hasGoal={monthlyGoal > 0}
               potentialPoints={potentialPoints}
-              canClaim={potentialPoints > 0 && remainingBudget > 0}
+              canClaim={canClaimImpactPoints}
+              claimedThisMonth={claimedThisMonth}
               onClaim={claimPoints}
             />
             <Button

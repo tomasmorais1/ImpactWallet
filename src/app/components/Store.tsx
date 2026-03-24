@@ -329,10 +329,10 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
         </CardHeader>
         <CardContent className="space-y-1.5">
           {[
-            'Stay under your monthly budget goal',
-            'Earn points from savings and achievements',
-            'Claim points from the Finance tab',
-            'Spend them here on donations & discounts',
+            'Earn monthly points when your spending sits in the green reward bands (60–100% of budget)',
+            'Extra points from achievements',
+            'Claim once per month from the Finance tab',
+            'Spend points here on donations & discounts',
           ].map((tip, i) => (
             <div key={i} className="flex items-start gap-2">
               <div className="h-4 w-4 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center flex-shrink-0 mt-0.5">

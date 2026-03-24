@@ -42,13 +42,13 @@ export function PointsDisplay({
         </span>
       </div>
 
-      <div className="relative mt-7 grid grid-cols-4 gap-x-1.5 gap-y-1 sm:gap-x-2">
+      <div className="relative mt-7 flex justify-center gap-1 px-0.5 sm:gap-1.5">
         {actions.map(({ label, icon: Icon, onClick }) => (
           <button
             key={label}
             type="button"
             onClick={onClick}
-            className="group flex min-w-0 flex-col items-center gap-1.5 rounded-xl py-0.5 transition active:scale-[0.98] hover:opacity-[0.97]"
+            className="group flex min-w-0 max-w-[24%] flex-1 flex-col items-center gap-1.5 rounded-xl py-0.5 transition active:scale-[0.98] hover:opacity-[0.97]"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/[0.18] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[2px] sm:h-11 sm:w-11">
               <Icon className="h-[17px] w-[17px] text-white sm:h-[18px] sm:w-[18px]" strokeWidth={2.25} />
