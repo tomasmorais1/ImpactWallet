@@ -2,37 +2,15 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { ScrollArea } from './ui/scroll-area';
 import { Expense } from '../App';
-import { 
-  Building2, 
-  CheckCircle2, 
-  RefreshCw, 
-  Trash2, 
-  ShoppingBag, 
-  Coffee, 
-  Home, 
-  Car, 
-  Heart, 
-  Gamepad2,
-  Link as LinkIcon,
-  Shield
-} from 'lucide-react';
+import { TransactionList } from './TransactionList';
+import { Building2, CheckCircle2, RefreshCw, Link as LinkIcon, Shield } from 'lucide-react';
 
 interface BankConnectionProps {
   expenses: Expense[];
   onDeleteExpense: (id: string) => void;
   onSyncTransactions: () => void;
 }
-
-const categories = [
-  { value: 'food', label: 'Food & Dining', icon: Coffee },
-  { value: 'shopping', label: 'Shopping', icon: ShoppingBag },
-  { value: 'home', label: 'Home & Utilities', icon: Home },
-  { value: 'transport', label: 'Transportation', icon: Car },
-  { value: 'health', label: 'Health & Wellness', icon: Heart },
-  { value: 'entertainment', label: 'Entertainment', icon: Gamepad2 },
-];
 
 const mockBanks = [
   { id: '1', name: 'Chase Bank', logo: '🏦', color: 'bg-blue-50 border-blue-200' },
@@ -65,12 +43,6 @@ export function BankConnection({
     setTimeout(() => {
       setIsSyncing(false);
     }, 1000);
-  };
-
-  const getCategoryIcon = (cat: string) => {
-    const category = categories.find(c => c.value === cat);
-    const Icon = category?.icon || ShoppingBag;
-    return <Icon className="h-4 w-4" />;
   };
 
   return (
@@ -170,52 +142,19 @@ export function BankConnection({
         </CardHeader>
         <CardContent>
           {expenses.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Building2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <div className="py-6 text-center text-muted-foreground">
+              <Building2 className="mx-auto mb-3 h-12 w-12 opacity-50" />
               <p className="text-sm">No transactions yet</p>
-              <p className="text-xs mt-1">
+              <p className="mt-1 text-xs">
                 {connectedBank ? 'Sync to fetch transactions' : 'Connect your bank to get started'}
               </p>
             </div>
           ) : (
-            <ScrollArea className="h-[400px] -mx-2 px-2">
-              <div className="space-y-2">
-                {expenses
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                  .map((expense) => (
-                    <div
-                      key={expense.id}
-                      className="flex items-center justify-between p-3 bg-muted/30 rounded-xl active:bg-muted transition-colors"
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="h-10 w-10 rounded-full bg-background flex items-center justify-center flex-shrink-0">
-                          {getCategoryIcon(expense.category)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{expense.description}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(expense.date).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <p className="font-bold">${expense.amount.toFixed(2)}</p>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onDeleteExpense(expense.id)}
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </ScrollArea>
+            <TransactionList
+              expenses={expenses}
+              onDeleteExpense={onDeleteExpense}
+              maxHeightClass="h-[400px]"
+            />
           )}
         </CardContent>
       </Card>

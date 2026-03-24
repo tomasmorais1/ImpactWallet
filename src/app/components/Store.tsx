@@ -331,7 +331,7 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
           {[
             'Earn monthly points when your spending sits in the green reward bands (60–100% of budget)',
             'Extra points from achievements',
-            'Claim once per month from the Finance tab',
+            'Claim once per month from the Settings tab',
             'Spend points here on donations & discounts',
           ].map((tip, i) => (
             <div key={i} className="flex items-start gap-2">

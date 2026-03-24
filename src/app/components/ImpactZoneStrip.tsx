@@ -7,11 +7,13 @@ interface ImpactZoneStripProps {
 }
 
 /**
- * Spending share of monthly budget (€), not points — lives in the budget card.
- * Colours: neutral base + emerald → teal → cyan (app palette).
+ * Single budget visual: zone bands (reward tiers) + marker + % + points hint.
+ * Spending share of monthly goal in €.
  */
 export function ImpactZoneStrip({ percentageUsed, hasGoal, tier }: ImpactZoneStripProps) {
-  const pct = Math.min(Math.max(percentageUsed, 0), 100);
+  const raw = percentageUsed;
+  const pct = Math.min(Math.max(raw, 0), 100);
+  const isOver = raw > 100;
 
   if (!hasGoal) {
     return (
@@ -26,16 +28,25 @@ export function ImpactZoneStrip({ percentageUsed, hasGoal, tier }: ImpactZoneStr
 
   return (
     <div className="mt-4 rounded-xl border border-emerald-100/90 bg-gradient-to-br from-emerald-50/50 to-teal-50/30 p-3 dark:border-emerald-900/50 dark:from-emerald-950/30 dark:to-teal-950/20">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800/90 dark:text-emerald-400/90">
-        Budget used this month
-      </p>
-      <p className="mt-0.5 text-xs text-muted-foreground">Share of your goal in € — ties to monthly impact points</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800/90 dark:text-emerald-400/90">
+            Budget used
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Of your monthly goal · impact points by zone</p>
+        </div>
+        <p
+          className={`shrink-0 text-2xl font-bold tabular-nums leading-none ${
+            isOver ? 'text-red-600 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'
+          }`}
+        >
+          {raw.toFixed(0)}%
+        </p>
+      </div>
 
       <div className="relative mt-3">
         <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-200/90 shadow-inner ring-1 ring-slate-200/80 dark:bg-slate-800 dark:ring-slate-700">
-          {/* 0–60%: no points — neutral */}
           <div className="w-[60%] bg-slate-300/70 dark:bg-slate-600/80" title="0–60%" />
-          {/* Reward bands: single cool gradient family */}
           <div className="w-[10%] bg-emerald-400/95 dark:bg-emerald-500/90" title="60–70%" />
           <div className="w-[10%] bg-emerald-500 dark:bg-emerald-600" title="70–80%" />
           <div className="w-[10%] bg-teal-500 dark:bg-teal-600" title="80–90%" />
@@ -56,21 +67,29 @@ export function ImpactZoneStrip({ percentageUsed, hasGoal, tier }: ImpactZoneStr
         <span>100%</span>
       </div>
 
-      <p className="mt-2 text-center text-[12px] font-semibold leading-tight text-foreground">
-        {tier.points > 0 ? (
-          <>
-            <span>{tier.label}</span>
-            <span className="mx-1 text-muted-foreground">·</span>
-            <span className="text-emerald-700 dark:text-emerald-400">+{tier.points} pts</span>
-            <span className="mt-1 block text-[11px] font-normal text-muted-foreground">{tier.subtitle}</span>
-          </>
-        ) : (
-          <>
-            <span>{tier.label}</span>
-            <span className="mt-1 block text-[11px] font-normal text-muted-foreground">{tier.subtitle}</span>
-          </>
-        )}
-      </p>
+      {isOver && (
+        <p className="mt-2 rounded-lg bg-red-50 px-2.5 py-2 text-center text-xs font-medium text-red-800 dark:bg-red-950/40 dark:text-red-200">
+          Over budget — no impact points until you are back within your goal.
+        </p>
+      )}
+
+      {!isOver && (
+        <p className="mt-2 text-center text-[12px] font-semibold leading-tight text-foreground">
+          {tier.points > 0 ? (
+            <>
+              <span>{tier.label}</span>
+              <span className="mx-1 text-muted-foreground">·</span>
+              <span className="text-emerald-700 dark:text-emerald-400">+{tier.points} pts</span>
+              <span className="mt-1 block text-[11px] font-normal text-muted-foreground">{tier.subtitle}</span>
+            </>
+          ) : (
+            <>
+              <span>{tier.label}</span>
+              <span className="mt-1 block text-[11px] font-normal text-muted-foreground">{tier.subtitle}</span>
+            </>
+          )}
+        </p>
+      )}
     </div>
   );
 }

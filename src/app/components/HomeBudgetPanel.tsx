@@ -71,7 +71,6 @@ export function HomeBudgetPanel({
   const refLabelFill = darkMode ? '#94a3b8' : '#64748b';
 
   const isOverBudget = percentageUsed > 100;
-  const pct = Math.min(percentageUsed, 100);
   const tierInfo = getBudgetTierInfo(percentageUsed);
 
   const cardClass =
@@ -238,34 +237,6 @@ export function HomeBudgetPanel({
           </ResponsiveContainer>
         </div>
       </div>
-
-      {monthlyGoal > 0 && (
-        <div className="border-t border-slate-100 bg-gradient-to-br from-white to-emerald-50/30 p-4 dark:border-slate-800 dark:from-slate-900/80 dark:to-emerald-950/20">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold text-foreground dark:text-white">Budget progress</span>
-            <span className="text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
-              {percentageUsed.toFixed(0)}%
-            </span>
-          </div>
-          <div className="relative mt-3 h-4 w-full overflow-hidden rounded-full bg-emerald-950/10 ring-1 ring-emerald-200/50 dark:bg-emerald-950/40 dark:ring-emerald-800/50">
-            <div
-              className={`h-full rounded-full transition-all duration-700 ease-out ${
-                isOverBudget
-                  ? 'bg-gradient-to-r from-rose-500 to-red-600 shadow-[0_0_12px_rgba(244,63,94,0.3)]'
-                  : percentageUsed > 90
-                    ? 'bg-gradient-to-r from-amber-500 via-emerald-500 to-teal-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                    : 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 shadow-[0_0_12px_rgba(20,184,166,0.3)]'
-              }`}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          {isOverBudget && (
-            <p className="mt-3 text-xs font-medium text-red-700 dark:text-red-300">
-              Over budget — try to reduce spending this month.
-            </p>
-          )}
-        </div>
-      )}
 
       {monthlyGoal === 0 && (
         <div className="border-t border-dashed border-slate-200 px-4 py-3 dark:border-slate-700">

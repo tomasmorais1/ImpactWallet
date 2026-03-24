@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { GoalSetting } from './components/GoalSetting';
 import { BankConnection } from './components/BankConnection';
-import { ProgressDisplay } from './components/ProgressDisplay';
 import { PointsDisplay } from './components/PointsDisplay';
 import { HomeBudgetPanel } from './components/HomeBudgetPanel';
 import { ClaimPointsCard } from './components/ClaimPointsCard';
+import { FinanceScreen } from './components/FinanceScreen';
+import { RecentTransactions } from './components/RecentTransactions';
 import { Store } from './components/Store';
 import { AppSettings } from './components/AppSettings';
 import { Login } from './components/Login';
@@ -228,7 +229,7 @@ function AppContent() {
       </button>
       <PointsDisplay
         totalPoints={totalPoints}
-        onAddPoints={() => setActiveTab('finance')}
+        onAddPoints={() => setActiveTab('settings')}
         onMove={() => setActiveTab('social')}
         onData={() => setActiveTab('finance')}
         onPremium={() => setActiveTab('premium')}
@@ -242,13 +243,9 @@ function AppContent() {
       remainingBudget={remainingBudget}
       percentageUsed={percentageUsed}
     />
-    <ProgressDisplay
-      monthlyGoal={monthlyGoal}
-      totalSpent={totalSpent}
-      remainingBudget={remainingBudget}
-      percentageUsed={percentageUsed}
-      expensesByCategory={thisMonthExpenses}
-      categoriesOnly
+    <RecentTransactions
+      expenses={thisMonthExpenses}
+      onSeeAll={() => setActiveTab('finance')}
     />
     </div>
   </div>
@@ -292,6 +289,23 @@ function AppContent() {
   </div>
 )}
         {activeTab === 'finance' && (
+          <FinanceScreen
+            thisMonthExpenses={thisMonthExpenses}
+            monthlyGoal={monthlyGoal}
+            totalSpent={totalSpent}
+            remainingBudget={remainingBudget}
+            percentageUsed={percentageUsed}
+            onDeleteExpense={deleteExpense}
+          />
+        )}
+
+        {activeTab === 'store' && (
+          <div className="px-4 pt-4">
+            <Store totalPoints={totalPoints} onRedeem={handleRedeem} />
+          </div>
+        )}
+
+        {activeTab === 'settings' && (
           <div className="space-y-6 px-4 pt-4">
             <ClaimPointsCard
               tier={budgetTier}
@@ -311,32 +325,17 @@ function AppContent() {
               Upgrade plan
             </Button>
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                {t.bank}
-              </h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.goals}</h2>
+              <GoalSetting monthlyGoal={monthlyGoal} onSetGoal={setMonthlyGoal} />
+            </section>
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.bank}</h2>
               <BankConnection
                 expenses={thisMonthExpenses}
                 onDeleteExpense={deleteExpense}
                 onSyncTransactions={syncTransactions}
               />
             </section>
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                {t.goals}
-              </h2>
-              <GoalSetting monthlyGoal={monthlyGoal} onSetGoal={setMonthlyGoal} />
-            </section>
-          </div>
-        )}
-
-        {activeTab === 'store' && (
-          <div className="px-4 pt-4">
-            <Store totalPoints={totalPoints} onRedeem={handleRedeem} />
-          </div>
-        )}
-
-        {activeTab === 'settings' && (
-          <div className="px-4 pt-4">
             <AppSettings />
           </div>
         )}
