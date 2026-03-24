@@ -1,5 +1,4 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Progress } from './ui/progress';
 import { Expense } from '../App';
 import { DollarSign, PieChart } from 'lucide-react';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -44,7 +43,7 @@ export function ProgressDisplay({
   }));
 
   const isOverBudget = percentageUsed > 100;
-  const progressColor = percentageUsed > 90 ? 'bg-destructive' : percentageUsed > 70 ? 'bg-chart-5' : 'bg-chart-2';
+  const pct = Math.min(percentageUsed, 100);
 
   if (monthlyGoal === 0) {
     return (
@@ -87,25 +86,32 @@ export function ProgressDisplay({
       </div>
 
       {/* Progress Bar */}
-      <Card>
+      <Card className="border-emerald-100/80 bg-gradient-to-br from-white to-emerald-50/40 dark:border-emerald-900/50 dark:from-card dark:to-emerald-950/20">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle>Budget Progress</CardTitle>
-            <span className="text-sm font-bold">{percentageUsed.toFixed(0)}%</span>
+            <span className="text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+              {percentageUsed.toFixed(0)}%
+            </span>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Progress value={Math.min(percentageUsed, 100)} className="h-3" indicatorClassName={progressColor} />
-          
-          {remainingBudget >= 0 ? (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-xl">
-              <p className="text-sm text-green-800">
-                Great! Keep it up to earn points! 💪
-              </p>
-            </div>
-          ) : (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-sm text-red-800">
+          <div className="relative h-4 w-full overflow-hidden rounded-full bg-emerald-950/10 ring-1 ring-emerald-200/50 dark:bg-emerald-950/40 dark:ring-emerald-800/50">
+            <div
+              className={`h-full rounded-full transition-all duration-700 ease-out ${
+                isOverBudget
+                  ? 'bg-gradient-to-r from-rose-500 to-red-600 shadow-[0_0_14px_rgba(244,63,94,0.35)]'
+                  : percentageUsed > 90
+                    ? 'bg-gradient-to-r from-amber-500 via-emerald-500 to-teal-500 shadow-[0_0_14px_rgba(16,185,129,0.35)]'
+                    : 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 shadow-[0_0_14px_rgba(20,184,166,0.35)]'
+              }`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+
+          {isOverBudget && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
+              <p className="text-sm text-red-900 dark:text-red-100">
                 Over budget. Try to reduce spending 📉
               </p>
             </div>

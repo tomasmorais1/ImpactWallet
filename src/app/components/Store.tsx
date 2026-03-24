@@ -5,7 +5,7 @@ import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
 import {
   Coins, Heart, Leaf, Droplets, GraduationCap, Users,
-  Tag, ShoppingBag, CheckCircle2, Zap, Trophy, Star, Award,
+  Tag, ShoppingBag, CheckCircle2,
 } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -172,14 +172,6 @@ const PRODUCTS: Product[] = [
   },
 ];
 
-function getLevel(points: number) {
-  if (points >= 1000) return { name: 'Diamond Saver', icon: Trophy, color: 'text-cyan-500' };
-  if (points >= 500) return { name: 'Gold Saver', icon: Award, color: 'text-yellow-500' };
-  if (points >= 250) return { name: 'Silver Saver', icon: Star, color: 'text-slate-500' };
-  if (points >= 100) return { name: 'Bronze Saver', icon: Zap, color: 'text-orange-500' };
-  return { name: 'Beginner', icon: Star, color: 'text-blue-500' };
-}
-
 type FilterType = 'all' | 'donation' | 'discount';
 
 export function Store({ totalPoints, onRedeem }: StoreProps) {
@@ -187,15 +179,6 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
   const [filter, setFilter] = useState<FilterType>('all');
   const [redeemedId, setRedeemedId] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState('');
-
-  const level = getLevel(totalPoints);
-  const LevelIcon = level.icon;
-
-  const nextMilestone =
-    totalPoints < 100 ? 100 :
-    totalPoints < 250 ? 250 :
-    totalPoints < 500 ? 500 :
-    totalPoints < 1000 ? 1000 : null;
 
   const filtered = PRODUCTS.filter(p => filter === 'all' || p.type === filter);
 
@@ -214,39 +197,16 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
   return (
     <div className="space-y-4">
       {/* Points Balance Hero */}
-      <Card className="bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 border-0 overflow-hidden relative">
-        <div className="absolute inset-0 opacity-10">
+      <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600">
+        <div className="pointer-events-none absolute inset-0 opacity-10">
           <div className="absolute top-2 right-4 text-[80px] select-none">⭐</div>
         </div>
-        <CardContent className="pt-6 pb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-11 w-11 rounded-full bg-white/20 flex items-center justify-center">
-              <LevelIcon className={`h-6 w-6 text-white`} />
-            </div>
-            <div>
-              <p className="text-white/80 text-xs">Your Level</p>
-              <p className="text-white font-semibold">{level.name}</p>
-            </div>
+        <CardContent className="relative pt-6 pb-6">
+          <p className="text-white/75 text-sm">Your balance</p>
+          <div className="mt-1 flex items-end gap-2">
+            <p className="text-5xl font-bold leading-none text-white">{totalPoints.toLocaleString()}</p>
+            <p className="pb-0.5 text-lg text-white/85">impact points</p>
           </div>
-          <p className="text-white/70 text-sm mb-1">Your Balance</p>
-          <div className="flex items-end gap-2">
-            <p className="text-5xl font-bold text-white leading-none">{totalPoints.toLocaleString()}</p>
-            <p className="text-white/80 text-lg pb-0.5">Impact Points</p>
-          </div>
-          {nextMilestone && (
-            <div className="mt-4">
-              <div className="flex justify-between text-xs text-white/70 mb-1">
-                <span>{totalPoints} pts</span>
-                <span>{nextMilestone} pts to next level</span>
-              </div>
-              <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-white rounded-full transition-all"
-                  style={{ width: `${Math.min((totalPoints / nextMilestone) * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -370,8 +330,8 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
         <CardContent className="space-y-1.5">
           {[
             'Stay under your monthly budget goal',
-            'Earn 1 point for every $10 saved',
-            'Claim your points from the Home tab',
+            'Earn points from savings and achievements',
+            'Claim points from the Finance tab',
             'Spend them here on donations & discounts',
           ].map((tip, i) => (
             <div key={i} className="flex items-start gap-2">

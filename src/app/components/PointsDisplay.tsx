@@ -1,81 +1,64 @@
-import { Card, CardContent } from './ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Trophy, Star, Award, Zap } from 'lucide-react';
-import { useSettings } from '../contexts/SettingsContext';
+import { Hexagon, Sparkles, Plus, ArrowLeftRight, Landmark, Crown } from 'lucide-react';
 
 interface PointsDisplayProps {
   totalPoints: number;
-  potentialPoints: number;
-  onClaimPoints: () => void;
-  canClaim: boolean;
+  onAddPoints: () => void;
+  onMove: () => void;
+  onData: () => void;
+  onPremium: () => void;
 }
 
-export function PointsDisplay({ 
-  totalPoints, 
-  potentialPoints, 
-  onClaimPoints,
-  canClaim 
+export function PointsDisplay({
+  totalPoints,
+  onAddPoints,
+  onMove,
+  onData,
+  onPremium,
 }: PointsDisplayProps) {
-  const { formatCurrency } = useSettings();
-  const getLevel = (points: number) => {
-    if (points >= 1000) return { name: 'Diamond Saver', icon: Trophy, color: 'text-cyan-600' };
-    if (points >= 500) return { name: 'Gold Saver', icon: Award, color: 'text-yellow-600' };
-    if (points >= 250) return { name: 'Silver Saver', icon: Star, color: 'text-gray-600' };
-    if (points >= 100) return { name: 'Bronze Saver', icon: Zap, color: 'text-orange-600' };
-    return { name: 'Beginner', icon: Star, color: 'text-blue-600' };
-  };
-
-  const level = getLevel(totalPoints);
-  const LevelIcon = level.icon;
-  
-  const nextMilestone = totalPoints < 100 ? 100 : 
-                        totalPoints < 250 ? 250 : 
-                        totalPoints < 500 ? 500 : 
-                        totalPoints < 1000 ? 1000 : null;
+  const actions = [
+    { label: 'Adicionar pontos', icon: Plus, onClick: onAddPoints },
+    { label: 'Mover', icon: ArrowLeftRight, onClick: onMove },
+    { label: 'Dados', icon: Landmark, onClick: onData },
+    { label: 'Premium', icon: Crown, onClick: onPremium },
+  ] as const;
 
   return (
-    <Card className="bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 border-purple-200">
-      <CardContent className="pt-5 pb-5">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="h-14 w-14 rounded-full bg-white flex items-center justify-center shadow-lg">
-            <LevelIcon className={`h-7 w-7 ${level.color}`} />
-          </div>
-          <div className="flex-1">
-            <Badge variant="secondary" className={`${level.color} mb-1`}>
-              {level.name}
-            </Badge>
-            <p className="text-sm text-muted-foreground">
-              {nextMilestone 
-                ? `${nextMilestone - totalPoints} points to next level`
-                : 'Max level! 🎉'}
-            </p>
-          </div>
+    <div className="relative overflow-hidden rounded-b-[1.75rem] bg-gradient-to-b from-emerald-500 via-teal-600 to-cyan-700 px-4 pt-12 pb-7 text-white shadow-lg">
+      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+      <div className="pointer-events-none absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-emerald-400/20 blur-2xl" />
+
+      <p className="relative text-center text-sm font-medium text-white/85">Impact Points</p>
+
+      <div className="relative mt-6 flex items-center justify-center gap-3">
+        <div className="relative flex h-[3.25rem] w-[3.25rem] shrink-0 items-center justify-center">
+          <Hexagon
+            className="absolute h-[3.25rem] w-[3.25rem] fill-white/20 stroke-white"
+            strokeWidth={1.35}
+          />
+          <Sparkles className="relative h-7 w-7 text-white" strokeWidth={2} />
         </div>
+        <span className="text-[3.25rem] font-bold leading-none tracking-tight tabular-nums">
+          {totalPoints.toLocaleString()}
+        </span>
+      </div>
 
-        {canClaim && (
-          <div className="space-y-2 mt-2">
-            <Button 
-              onClick={onClaimPoints} 
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 h-14 text-base shadow-lg"
-            >
-              <Trophy className="h-5 w-5 mr-2" />
-              Claim {potentialPoints} Impact Points!
-            </Button>
-            <p className="text-sm text-center text-muted-foreground">
-              You're saving {formatCurrency(potentialPoints * 10)} this month! 🎉
-            </p>
-          </div>
-        )}
-
-        {!canClaim && potentialPoints === 0 && totalPoints > 0 && (
-          <div className="text-center p-4 bg-white/50 rounded-xl mt-2">
-            <p className="text-sm text-muted-foreground">
-              Keep tracking to see your savings
-            </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      <div className="relative mt-7 grid grid-cols-4 gap-x-1.5 gap-y-1 sm:gap-x-2">
+        {actions.map(({ label, icon: Icon, onClick }) => (
+          <button
+            key={label}
+            type="button"
+            onClick={onClick}
+            className="group flex min-w-0 flex-col items-center gap-1.5 rounded-xl py-0.5 transition active:scale-[0.98] hover:opacity-[0.97]"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/[0.18] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[2px] sm:h-11 sm:w-11">
+              <Icon className="h-[17px] w-[17px] text-white sm:h-[18px] sm:w-[18px]" strokeWidth={2.25} />
+            </span>
+            <span className="w-full max-w-[5.25rem] px-0.5 text-center text-[11px] font-semibold leading-[1.2] tracking-wide text-white drop-shadow-sm sm:text-xs sm:leading-snug">
+              {label}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

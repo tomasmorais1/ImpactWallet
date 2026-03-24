@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Award, TrendingUp, Target, Gem, Star, Crown, Zap, Heart, Globe, Users } from 'lucide-react';
+import { Award } from 'lucide-react';
 
 export interface Achievement {
   id: string;
@@ -18,28 +18,10 @@ export interface Achievement {
 interface AchievementsProps {
   totalPoints: number;
   totalSaved: number;
-  monthlyGoal: number;
   friendCount: number;
 }
 
-export function Achievements({ totalPoints, totalSaved, monthlyGoal, friendCount }: AchievementsProps) {
-  // Calculate user level based on points
-  const level = Math.floor(totalPoints / 100) + 1;
-  const nextLevelPoints = level * 100;
-  const levelProgress = (totalPoints % 100);
-
-  // Determine saver tier
-  const getSaverTier = () => {
-    if (totalPoints >= 1000) return { name: 'Diamond Saver', icon: Gem, color: 'from-cyan-500 to-blue-600' };
-    if (totalPoints >= 500) return { name: 'Platinum Saver', icon: Crown, color: 'from-purple-500 to-pink-600' };
-    if (totalPoints >= 250) return { name: 'Gold Saver', icon: Star, color: 'from-amber-500 to-orange-600' };
-    if (totalPoints >= 100) return { name: 'Silver Saver', icon: Award, color: 'from-gray-400 to-gray-600' };
-    return { name: 'Beginner Saver', icon: Zap, color: 'from-green-500 to-emerald-600' };
-  };
-
-  const tier = getSaverTier();
-  const TierIcon = tier.icon;
-
+export function Achievements({ totalPoints, totalSaved, friendCount }: AchievementsProps) {
   const achievements: Achievement[] = [
     {
       id: 'first-save',
@@ -107,7 +89,7 @@ export function Achievements({ totalPoints, totalSaved, monthlyGoal, friendCount
     {
       id: 'mega-saver',
       title: 'Mega Saver',
-      description: 'Accumulate 500 Impact Points',
+      description: 'Reach 500 impact points',
       icon: '⭐',
       unlocked: totalPoints >= 500,
       progress: Math.min(totalPoints, 500),
@@ -118,8 +100,8 @@ export function Achievements({ totalPoints, totalSaved, monthlyGoal, friendCount
     },
     {
       id: 'diamond-tier',
-      title: 'Diamond Tier',
-      description: 'Reach 1000 Impact Points',
+      title: 'Thousand Club',
+      description: 'Reach 1000 impact points',
       icon: '💠',
       unlocked: totalPoints >= 1000,
       progress: Math.min(totalPoints, 1000),
@@ -175,73 +157,15 @@ export function Achievements({ totalPoints, totalSaved, monthlyGoal, friendCount
 
   return (
     <div className="space-y-4">
-      {/* Player Profile Card */}
-      <Card className={`bg-gradient-to-r ${tier.color} border-0 text-white overflow-hidden shadow-lg`}>
-        <CardContent className="pt-6 pb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="h-14 w-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <TierIcon className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <h3 className="text-white font-bold text-lg">{tier.name}</h3>
-                <p className="text-white/80 text-sm">Level {level}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-white">{totalPoints}</p>
-              <p className="text-xs text-white/80">Total Points</p>
-            </div>
-          </div>
-          
-          {/* Level Progress */}
-          <div>
-            <div className="flex justify-between text-xs text-white/90 mb-1.5">
-              <span>Level {level}</span>
-              <span>{levelProgress}/100 to Level {level + 1}</span>
-            </div>
-            <div className="h-2.5 rounded-full bg-white/20 overflow-hidden">
-              <div 
-                className="h-full bg-white rounded-full transition-all duration-500"
-                style={{ width: `${levelProgress}%` }}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="pt-4 pb-4 text-center">
-            <Award className="h-6 w-6 mx-auto mb-2 text-amber-500" />
-            <p className="text-2xl font-bold">{unlockedAchievements.length}</p>
-            <p className="text-xs text-muted-foreground">Unlocked</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4 text-center">
-            <Target className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
-            <p className="text-2xl font-bold">{totalAchievements}</p>
-            <p className="text-xs text-muted-foreground">Total</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4 text-center">
-            <TrendingUp className="h-6 w-6 mx-auto mb-2 text-blue-500" />
-            <p className="text-2xl font-bold">{Math.round((unlockedAchievements.length / totalAchievements) * 100)}%</p>
-            <p className="text-xs text-muted-foreground">Complete</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Achievement List */}
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            <Award className="h-5 w-5 text-emerald-600" />
             <div>
-              <CardTitle className="text-base">Your Achievements</CardTitle>
-              <CardDescription>Unlock rewards by completing challenges</CardDescription>
+              <CardTitle className="text-base">Achievements</CardTitle>
+              <CardDescription>
+                Complete challenges to earn impact points — each unlock adds points to your balance.
+              </CardDescription>
             </div>
           </div>
         </CardHeader>

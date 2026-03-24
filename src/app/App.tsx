@@ -3,13 +3,16 @@ import { GoalSetting } from './components/GoalSetting';
 import { BankConnection } from './components/BankConnection';
 import { ProgressDisplay } from './components/ProgressDisplay';
 import { PointsDisplay } from './components/PointsDisplay';
+import { MonthlySpendingChart } from './components/MonthlySpendingChart';
+import { ClaimPointsCard } from './components/ClaimPointsCard';
 import { Store } from './components/Store';
 import { AppSettings } from './components/AppSettings';
 import { Login } from './components/Login';
 import { Friends } from './components/Friends';
 import { Achievements } from './components/Achievements';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
-import { Home, Building2, Target, ShoppingBag, Settings, Coins, Wallet, Users } from 'lucide-react';
+import { Home, ShoppingBag, Settings, Wallet, Users, User } from 'lucide-react';
+import { Button } from './components/ui/button';
 import { Card, CardContent } from './components/ui/card';
 import { toast } from 'sonner';
 import { Toaster } from './components/ui/sonner';
@@ -90,10 +93,8 @@ function BudgetTracker({
 }
 
 function AppContent() {
-  const { t, darkMode, formatCurrency } = useSettings();
+  const { t } = useSettings();
   const [activeTab, setActiveTab] = useState('home');
-  const [socialTab, setSocialTab] = useState<'friends' | 'achievements'>('friends');
-  const [financeTab, setFinanceTab] = useState<'bank' | 'goals'>('bank');
   
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -156,7 +157,10 @@ function AppContent() {
   };
 
   const claimPoints = () => {
-    if (potentialPoints > 0) setTotalPoints(prev => prev + potentialPoints);
+    if (potentialPoints > 0) {
+      setTotalPoints((prev) => prev + potentialPoints);
+      toast.success(`+${potentialPoints} impact points claimed`);
+    }
   };
 
   const handleRedeem = (cost: number) => {
@@ -197,51 +201,30 @@ function AppContent() {
 
   return (
     <div className={`min-h-screen flex flex-col max-w-md mx-auto bg-background`}>
-      {/* App Header */}
-     <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white px-4 pt-10 pb-10">
-  <div className="flex items-center justify-between">
-
-    <div className="flex items-center gap-2.5">
-      <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-        <Wallet className="h-5 w-5 text-white" />
-      </div>
-      <div>
-        <h1 className="text-white leading-tight">Impact Wallet</h1>
-        <p className="text-emerald-100 text-xs">{t.appTagline}</p>
-      </div>
-    </div>
-
-    {/* 👉 NOVO: Upgrade + Points */}
-    <div className="flex items-center gap-2">
-
-      <button
-        onClick={() => setActiveTab('premium')}
-        className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-white/30"
-      >
-        Upgrade 🚀
-      </button>
-
-      <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5">
-        <Coins className="h-4 w-4 text-amber-300" />
-        <span className="text-sm font-bold text-white">{totalPoints.toLocaleString()}</span>
-        <span className="text-xs text-emerald-100">pts</span>
-      </div>
-
-    </div>
-
-  </div>
-</div>
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto pb-20 px-4 pt-4">
+      <div className="flex-1 overflow-y-auto pb-20 pt-[max(0.75rem,env(safe-area-inset-top))]">
         {/* HOME */}
 {activeTab === 'home' && (
   <div className="space-y-4">
-    <PointsDisplay
-      totalPoints={totalPoints}
-      potentialPoints={potentialPoints}
-      onClaimPoints={claimPoints}
-      canClaim={potentialPoints > 0 && remainingBudget > 0}
-    />
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setActiveTab('settings')}
+        className="absolute left-4 top-[max(0.25rem,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/45 bg-white/20 text-white shadow-md backdrop-blur-md transition hover:bg-white/30"
+        aria-label="Profile"
+      >
+        <User className="h-5 w-5" strokeWidth={2} />
+      </button>
+      <PointsDisplay
+        totalPoints={totalPoints}
+        onAddPoints={() => setActiveTab('finance')}
+        onMove={() => setActiveTab('social')}
+        onData={() => setActiveTab('finance')}
+        onPremium={() => setActiveTab('premium')}
+      />
+    </div>
+    <div className="px-4 space-y-4">
+    <MonthlySpendingChart expenses={expenses} monthlyGoal={monthlyGoal} />
     <ProgressDisplay
       monthlyGoal={monthlyGoal}
       totalSpent={totalSpent}
@@ -249,12 +232,13 @@ function AppContent() {
       percentageUsed={percentageUsed}
       expensesByCategory={thisMonthExpenses}
     />
+    </div>
   </div>
 )}
 
 {/* 👉 PREMIUM (FORA DO HOME) */}
-{activeTab === 'premium' && (
-  <div className="space-y-4">
+        {activeTab === 'premium' && (
+  <div className="space-y-4 px-4 pt-4">
 
     <Card className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0">
       <CardContent className="p-6 text-center">
@@ -290,78 +274,59 @@ function AppContent() {
   </div>
 )}
         {activeTab === 'finance' && (
-  <div className="space-y-4">
-
-    {/* Switch Bank / Goals */}
-    <div className="flex rounded-xl bg-secondary p-1">
-
-      <button
-        onClick={() => setFinanceTab('bank')}
-        className={`flex-1 py-2 text-sm rounded-lg ${
-          financeTab === 'bank'
-            ? 'bg-background shadow'
-            : 'text-muted-foreground'
-        }`}
-      >
-        Bank
-      </button>
-
-      <button
-        onClick={() => setFinanceTab('goals')}
-        className={`flex-1 py-2 text-sm rounded-lg ${
-          financeTab === 'goals'
-            ? 'bg-background shadow'
-            : 'text-muted-foreground'
-        }`}
-      >
-        Goals
-      </button>
-
-    </div>
-
-    {/* Content */}
-    {financeTab === 'bank' && (
-      <BankConnection
-        expenses={thisMonthExpenses}
-        onDeleteExpense={deleteExpense}
-        onSyncTransactions={syncTransactions}
-      />
-    )}
-
-    {financeTab === 'goals' && (
-      <GoalSetting
-        monthlyGoal={monthlyGoal}
-        onSetGoal={setMonthlyGoal}
-      />
-    )}
-
-  </div>
-)}
+          <div className="space-y-6 px-4 pt-4">
+            <ClaimPointsCard
+              potentialPoints={potentialPoints}
+              canClaim={potentialPoints > 0 && remainingBudget > 0}
+              onClaim={claimPoints}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full rounded-xl border-emerald-300 bg-emerald-50/70 font-semibold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-950/60"
+              onClick={() => setActiveTab('premium')}
+            >
+              Upgrade plan
+            </Button>
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {t.bank}
+              </h2>
+              <BankConnection
+                expenses={thisMonthExpenses}
+                onDeleteExpense={deleteExpense}
+                onSyncTransactions={syncTransactions}
+              />
+            </section>
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {t.goals}
+              </h2>
+              <GoalSetting monthlyGoal={monthlyGoal} onSetGoal={setMonthlyGoal} />
+            </section>
+          </div>
+        )}
 
         {activeTab === 'store' && (
-          <Store
-            totalPoints={totalPoints}
-            onRedeem={handleRedeem}
-          />
+          <div className="px-4 pt-4">
+            <Store totalPoints={totalPoints} onRedeem={handleRedeem} />
+          </div>
         )}
 
         {activeTab === 'settings' && (
-          <AppSettings />
+          <div className="px-4 pt-4">
+            <AppSettings />
+          </div>
         )}
         
         {activeTab === 'social' && (
-          <div className="space-y-4">
+          <div className="space-y-4 px-4 pt-4">
             <Friends
               totalPoints={totalPoints}
               onSendPoints={handleSendPoints}
               onRequestPoints={handleRequestPoints}
             />
-            <Achievements
-              totalPoints={totalPoints}
-              totalSaved={savedAmount}
-              monthlyGoal={monthlyGoal}
-              friendCount={friendCount}
-            />
+            <Achievements totalPoints={totalPoints} totalSaved={savedAmount} friendCount={friendCount} />
           </div>
         )}
       </div>
