@@ -42,6 +42,7 @@ export type Translations = {
   goals: string;
   donate: string;
   settings: string;
+  profile: string;
   appTagline: string;
   totalPoints: string;
   available: string;
@@ -77,7 +78,7 @@ export type Translations = {
 
 const TRANSLATIONS: Record<LanguageCode, Translations> = {
   en: {
-    home: 'Home', bank: 'Bank', goals: 'Goals', donate: 'Donate', settings: 'Settings',
+    home: 'Home', bank: 'Bank', goals: 'Goals', donate: 'Donate', settings: 'Settings', profile: 'Profile',
     appTagline: 'Your money, your goals',
     totalPoints: 'Total Points', available: 'Available',
     currency: 'Currency', language: 'Language', darkMode: 'Dark Mode', lightMode: 'Light Mode',
@@ -103,7 +104,7 @@ const TRANSLATIONS: Record<LanguageCode, Translations> = {
     nothingSaved: 'Save more to unlock donations',
   },
   es: {
-    home: 'Inicio', bank: 'Banco', goals: 'Metas', donate: 'Donar', settings: 'Ajustes',
+    home: 'Inicio', bank: 'Banco', goals: 'Metas', donate: 'Donar', settings: 'Ajustes', profile: 'Perfil',
     appTagline: 'Tu dinero, tus metas',
     totalPoints: 'Puntos Totales', available: 'Disponible',
     currency: 'Moneda', language: 'Idioma', darkMode: 'Modo Oscuro', lightMode: 'Modo Claro',
@@ -129,7 +130,7 @@ const TRANSLATIONS: Record<LanguageCode, Translations> = {
     nothingSaved: 'Ahorra más para desbloquear donaciones',
   },
   fr: {
-    home: 'Accueil', bank: 'Banque', goals: 'Objectifs', donate: 'Donner', settings: 'Paramètres',
+    home: 'Accueil', bank: 'Banque', goals: 'Objectifs', donate: 'Donner', settings: 'Paramètres', profile: 'Profil',
     appTagline: 'Votre argent, vos objectifs',
     totalPoints: 'Points Totaux', available: 'Disponible',
     currency: 'Devise', language: 'Langue', darkMode: 'Mode Sombre', lightMode: 'Mode Clair',
@@ -155,7 +156,7 @@ const TRANSLATIONS: Record<LanguageCode, Translations> = {
     nothingSaved: 'Économisez plus pour débloquer les dons',
   },
   de: {
-    home: 'Start', bank: 'Bank', goals: 'Ziele', donate: 'Spenden', settings: 'Einstellungen',
+    home: 'Start', bank: 'Bank', goals: 'Ziele', donate: 'Spenden', settings: 'Einstellungen', profile: 'Profil',
     appTagline: 'Dein Geld, deine Ziele',
     totalPoints: 'Gesamtpunkte', available: 'Verfügbar',
     currency: 'Währung', language: 'Sprache', darkMode: 'Dunkelmodus', lightMode: 'Hellmodus',
@@ -181,7 +182,7 @@ const TRANSLATIONS: Record<LanguageCode, Translations> = {
     nothingSaved: 'Mehr sparen, um Spenden freizuschalten',
   },
   pt: {
-    home: 'Início', bank: 'Banco', goals: 'Metas', donate: 'Doar', settings: 'Configurações',
+    home: 'Início', bank: 'Banco', goals: 'Metas', donate: 'Doar', settings: 'Configurações', profile: 'Perfil',
     appTagline: 'Seu dinheiro, seus objetivos',
     totalPoints: 'Pontos Totais', available: 'Disponível',
     currency: 'Moeda', language: 'Idioma', darkMode: 'Modo Escuro', lightMode: 'Modo Claro',

@@ -117,17 +117,15 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
   };
 
   return (
-    <div className="space-y-4 pb-4">
-      {/* Points header — Revolut-style pill */}
+    <div className="space-y-4 px-4 pb-4 pt-4">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold tracking-tight">Store</h1>
+        <h1 className="text-xl font-bold tracking-tight text-foreground">Store</h1>
         <div className="flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5 shadow-sm">
           <img src={impactPointsLogo} alt="" className="h-6 w-6 object-contain" />
           <span className="text-base font-bold tabular-nums">{totalPoints.toLocaleString()}</span>
         </div>
       </div>
 
-      {/* Main tabs */}
       <div className="flex rounded-2xl bg-muted/70 p-1 dark:bg-zinc-900/80">
         {(
           [

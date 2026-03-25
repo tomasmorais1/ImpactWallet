@@ -24,11 +24,11 @@ export function PointsDisplay({
   ] as const;
 
   return (
-    <div className="relative overflow-hidden rounded-b-[1.75rem] bg-gradient-to-b from-emerald-500 via-teal-600 to-cyan-700 px-4 pt-12 pb-7 text-white shadow-lg">
+    <div className="relative px-4 pb-7 pt-12 text-white">
       <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-      <div className="pointer-events-none absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-emerald-400/20 blur-2xl" />
+      <div className="pointer-events-none absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-emerald-400/15 blur-2xl dark:bg-teal-400/10" />
 
-      <p className="relative text-center text-sm font-medium text-white/85">Impact Points</p>
+      <p className="relative text-center text-sm font-medium text-white/90 drop-shadow-sm">Impact Points</p>
 
       <div className="relative mt-6 flex items-center justify-center gap-3">
         <img

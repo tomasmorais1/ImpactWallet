@@ -1,20 +1,17 @@
 import { useState, useEffect } from 'react';
-import { GoalSetting } from './components/GoalSetting';
-import { BankConnection } from './components/BankConnection';
 import { PointsDisplay } from './components/PointsDisplay';
+import { ScreenGradientLayout } from './components/ScreenGradientLayout';
 import { HomeBudgetPanel } from './components/HomeBudgetPanel';
 import { ImpactSnapshotSection } from './components/ImpactSnapshotSection';
-import { ClaimPointsCard } from './components/ClaimPointsCard';
 import { FinanceScreen } from './components/FinanceScreen';
 import { RecentTransactions } from './components/RecentTransactions';
 import { Store } from './components/Store';
-import { AppSettings } from './components/AppSettings';
+import { ProfileScreen } from './components/ProfileScreen';
 import { Login } from './components/Login';
 import { Friends } from './components/Friends';
 import { Achievements } from './components/Achievements';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
-import { Home, ShoppingBag, Settings, Wallet, Users, User } from 'lucide-react';
-import { Button } from './components/ui/button';
+import { Home, ShoppingBag, Wallet, Users, User } from 'lucide-react';
 import { Card, CardContent } from './components/ui/card';
 import { toast } from 'sonner';
 import { Toaster } from './components/ui/sonner';
@@ -209,48 +206,50 @@ function AppContent() {
     { id: 'social', label: 'Social', icon: Users },
     {id: 'finance', label: 'Finance', icon: Wallet },
     { id: 'store', label: 'Store', icon: ShoppingBag },
-    { id: 'settings', label: t.settings, icon: Settings },
+    { id: 'profile', label: t.profile, icon: User },
   ];
 
   return (
     <div className={`min-h-screen flex flex-col max-w-md mx-auto bg-background`}>
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto pb-20 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]">
         {/* HOME */}
 {activeTab === 'home' && (
-  <div className="space-y-4">
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setActiveTab('settings')}
-        className="absolute left-4 top-[max(0.85rem,calc(env(safe-area-inset-top)+0.35rem))] z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/45 bg-white/20 text-white shadow-md backdrop-blur-md transition hover:bg-white/30"
-        aria-label="Profile"
-      >
-        <User className="h-5 w-5" strokeWidth={2} />
-      </button>
-      <PointsDisplay
-        totalPoints={totalPoints}
-        onAddPoints={() => setActiveTab('settings')}
-        onMove={() => setActiveTab('social')}
-        onData={() => setActiveTab('finance')}
-        onPremium={() => setActiveTab('premium')}
-      />
+  <ScreenGradientLayout>
+    <div className="space-y-4">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setActiveTab('profile')}
+          className="absolute left-4 top-[max(0.85rem,calc(env(safe-area-inset-top)+0.35rem))] z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/45 bg-white/20 text-white shadow-md backdrop-blur-md transition hover:bg-white/30"
+          aria-label="Profile"
+        >
+          <User className="h-5 w-5" strokeWidth={2} />
+        </button>
+        <PointsDisplay
+          totalPoints={totalPoints}
+          onAddPoints={() => setActiveTab('profile')}
+          onMove={() => setActiveTab('social')}
+          onData={() => setActiveTab('finance')}
+          onPremium={() => setActiveTab('premium')}
+        />
+      </div>
+      <div className="space-y-4 px-4 pb-6">
+        <HomeBudgetPanel
+          expenses={expenses}
+          monthlyGoal={monthlyGoal}
+          totalSpent={totalSpent}
+          remainingBudget={remainingBudget}
+          percentageUsed={percentageUsed}
+        />
+        <ImpactSnapshotSection expenses={expenses} />
+        <RecentTransactions
+          expenses={thisMonthExpenses}
+          onSeeAll={() => setActiveTab('finance')}
+        />
+      </div>
     </div>
-    <div className="px-4 space-y-4">
-    <HomeBudgetPanel
-      expenses={expenses}
-      monthlyGoal={monthlyGoal}
-      totalSpent={totalSpent}
-      remainingBudget={remainingBudget}
-      percentageUsed={percentageUsed}
-    />
-    <ImpactSnapshotSection expenses={expenses} />
-    <RecentTransactions
-      expenses={thisMonthExpenses}
-      onSeeAll={() => setActiveTab('finance')}
-    />
-    </div>
-  </div>
+  </ScreenGradientLayout>
 )}
 
 {/* 👉 PREMIUM (FORA DO HOME) */}
@@ -301,49 +300,32 @@ function AppContent() {
           />
         )}
 
-        {activeTab === 'store' && (
-          <div className="px-4 pt-4">
-            <Store totalPoints={totalPoints} onRedeem={handleRedeem} />
-          </div>
-        )}
+        {activeTab === 'store' && <Store totalPoints={totalPoints} onRedeem={handleRedeem} />}
 
-        {activeTab === 'settings' && (
-          <div className="space-y-6 px-4 pt-4">
-            <ClaimPointsCard
-              tier={budgetTier}
-              percentageUsed={percentageUsed}
-              hasGoal={monthlyGoal > 0}
-              potentialPoints={potentialPoints}
-              canClaim={canClaimImpactPoints}
-              claimedThisMonth={claimedThisMonth}
-              onClaim={claimPoints}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full rounded-xl border-emerald-300 bg-emerald-50/70 font-semibold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-950/60"
-              onClick={() => setActiveTab('premium')}
-            >
-              Upgrade plan
-            </Button>
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.goals}</h2>
-              <GoalSetting monthlyGoal={monthlyGoal} onSetGoal={setMonthlyGoal} />
-            </section>
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t.bank}</h2>
-              <BankConnection
-                expenses={thisMonthExpenses}
-                onDeleteExpense={deleteExpense}
-                onSyncTransactions={syncTransactions}
-              />
-            </section>
-            <AppSettings />
-          </div>
+        {activeTab === 'profile' && (
+          <ProfileScreen
+            userEmail={userEmail}
+            monthlyGoal={monthlyGoal}
+            onSetGoal={setMonthlyGoal}
+            totalPoints={totalPoints}
+            setTotalPoints={setTotalPoints}
+            thisMonthExpenses={thisMonthExpenses}
+            onDeleteExpense={deleteExpense}
+            onSyncTransactions={syncTransactions}
+            onUpgrade={() => setActiveTab('premium')}
+            onInviteFriends={() => setActiveTab('social')}
+            tier={budgetTier}
+            percentageUsed={percentageUsed}
+            hasGoal={monthlyGoal > 0}
+            potentialPoints={potentialPoints}
+            canClaim={canClaimImpactPoints}
+            claimedThisMonth={claimedThisMonth}
+            onClaim={claimPoints}
+          />
         )}
         
         {activeTab === 'social' && (
-          <div className="space-y-4 px-4 pt-4">
+          <div className="space-y-4 px-4 pb-6 pt-4">
             <Friends
               totalPoints={totalPoints}
               onSendPoints={handleSendPoints}
@@ -355,8 +337,8 @@ function AppContent() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border shadow-lg max-w-md mx-auto">
-        <div className="grid grid-cols-5 h-15">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] shadow-lg max-w-md mx-auto">
+        <div className="grid h-15 grid-cols-5">
           {navItems.map(({ id, label, icon: Icon }) => (
             <button
               key={id}

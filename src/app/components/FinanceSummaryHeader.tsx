@@ -34,7 +34,7 @@ export function FinanceSummaryHeader({
   const pctBar = Math.min(Math.max(percentageUsed, 0), 100);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-emerald-400/30 bg-gradient-to-br from-emerald-600 via-emerald-600 to-teal-700 p-5 text-white shadow-lg shadow-emerald-900/15">
+    <div className="px-1 pb-2 pt-1 text-white">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-white/75">Finance</p>
