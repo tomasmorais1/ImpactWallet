@@ -325,14 +325,14 @@ function AppContent() {
         )}
         
         {activeTab === 'social' && (
-          <div className="space-y-4 px-4 pb-6 pt-4">
-            <Friends
-              totalPoints={totalPoints}
-              onSendPoints={handleSendPoints}
-              onRequestPoints={handleRequestPoints}
-            />
-            <Achievements totalPoints={totalPoints} totalSaved={savedAmount} friendCount={friendCount} />
-          </div>
+  <Friends
+    totalPoints={totalPoints}
+    totalSaved={savedAmount}
+    friendCount={5}
+    onSendPoints={handleSendPoints}
+    onRequestPoints={handleRequestPoints}
+  />
+
         )}
       </div>
 

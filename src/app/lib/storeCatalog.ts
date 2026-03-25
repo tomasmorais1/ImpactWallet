@@ -1,4 +1,12 @@
 /** Impact Points ↔ EUR conversion (same scale as Revolut-style screenshots). */
+import careImg from '../assets/Care.jpg';
+import cruzImg from '../assets/cruz_vermlha.webp';
+import wwfImg from '../assets/WWF.jpg';
+import careLogo from '../assets/Logo_Care.png';
+import cruzLogo from '../assets/Cruz-Vermelha_LOGO.JPG';
+import wwfLogo from '../assets/Logo_WWF.png';
+import iomImg from '../assets/IOMM.JPG';
+import iomLogo from '../assets/IOM_logo.png';
 export const POINTS_PER_EURO = 140;
 
 export const DONATION_EURO_AMOUNTS = [10, 25, 50, 100, 150, 200] as const;
@@ -12,10 +20,12 @@ export type Charity = {
   name: string;
   tagline: string;
   about: string;
-  /** Tailwind gradient classes for card / hero */
+  /** Tailwind gradient classes for fallback / overlay */
   gradient: string;
   logoEmoji: string;
   socialProof: string;
+  image?: string;
+  logo?: string;
 };
 
 export const CHARITIES: Charity[] = [
@@ -28,17 +38,21 @@ export const CHARITIES: Charity[] = [
     gradient: 'from-amber-900/90 via-orange-900/80 to-zinc-900',
     logoEmoji: '☀️',
     socialProof: '10,4k pessoas doaram para esta instituição',
+    image: careImg,
+    logo: careLogo,
   },
   {
-    id: 'iom',
-    name: 'IOM, UN Migration',
-    tagline: 'Promover uma migração humanitária e ordenada.',
-    about:
-      'A Organização Internacional para as Migrações apoia migrantes e comunidades anfitriãs com abrigo, informação e integração.',
-    gradient: 'from-sky-900/90 via-blue-950/90 to-zinc-950',
-    logoEmoji: '🌍',
-    socialProof: 'Milhares de apoios através da comunidade Impact Wallet',
-  },
+  id: 'iom',
+  name: 'IOM, UN Migration',
+  tagline: 'Promover uma migração humanitária e ordenada.',
+  about:
+    'A Organização Internacional para as Migrações apoia migrantes e comunidades anfitriãs com abrigo, informação e integração.',
+  gradient: 'from-sky-900/90 via-blue-950/90 to-zinc-950',
+  logoEmoji: '🌍',
+  socialProof: 'Milhares de apoios através da comunidade Impact Wallet',
+  image: iomImg,
+  logo: iomLogo,
+},
   {
     id: 'cv',
     name: 'Cruz Vermelha Portuguesa',
@@ -48,6 +62,8 @@ export const CHARITIES: Charity[] = [
     gradient: 'from-red-950/90 via-zinc-900 to-zinc-950',
     logoEmoji: '❤️',
     socialProof: 'Apoio contínuo em missões locais e internacionais',
+    image: cruzImg,
+    logo: cruzLogo,
   },
   {
     id: 'wwf',
@@ -58,9 +74,10 @@ export const CHARITIES: Charity[] = [
     gradient: 'from-emerald-950/90 via-green-950 to-zinc-950',
     logoEmoji: '🐼',
     socialProof: 'Comunidade global de conservação',
+    image: wwfImg,
+    logo: wwfLogo,
   },
 ];
-
 export type DiscountOffer = {
   id: string;
   brand: string;

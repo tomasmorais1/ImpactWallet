@@ -170,20 +170,41 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
           <div className="grid grid-cols-2 gap-3">
             {CHARITIES.map((c) => (
               <button
-                key={c.id}
-                type="button"
-                onClick={() => setDetail(c)}
-                className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-border/60 text-left shadow-sm transition hover:opacity-[0.98] active:scale-[0.99]"
-              >
-                <div className={cn('absolute inset-0 bg-gradient-to-br', c.gradient)} />
-                <div className="absolute left-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-xl shadow-md dark:bg-zinc-900/90">
-                  {c.logoEmoji}
-                </div>
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 pt-10">
-                  <p className="line-clamp-2 text-sm font-bold leading-tight text-white">{c.name}</p>
-                  <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-white/85">{c.tagline}</p>
-                </div>
-              </button>
+  key={c.id}
+  type="button"
+  onClick={() => setDetail(c)}
+  className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-border/60 text-left shadow-sm transition hover:opacity-[0.98] active:scale-[0.99]"
+>
+  {c.image ? (
+    <>
+      <img
+        src={c.image}
+        alt={c.name}
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-black/25" />
+    </>
+  ) : (
+    <div className={cn('absolute inset-0 bg-gradient-to-br', c.gradient)} />
+  )}
+
+  <div className="absolute left-3 top-3 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/95 p-1 shadow-md dark:bg-zinc-900/90">
+  {c.logo ? (
+    <img
+      src={c.logo}
+      alt={c.name}
+      className="h-full w-full object-contain"
+    />
+  ) : (
+    <span className="text-xl">{c.logoEmoji}</span>
+  )}
+</div>
+
+  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 pt-10">
+    <p className="line-clamp-2 text-sm font-bold leading-tight text-white">{c.name}</p>
+    <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-white/85">{c.tagline}</p>
+  </div>
+</button>
             ))}
           </div>
         </section>
@@ -350,9 +371,17 @@ function CharityDetail({
           charity.gradient,
         )}
       >
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-2xl shadow-md dark:bg-zinc-900/90">
-          {charity.logoEmoji}
-        </div>
+        <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-white/95 p-1 shadow-md dark:bg-zinc-900/90">
+  {charity.logo ? (
+    <img
+      src={charity.logo}
+      alt={charity.name}
+      className="h-full w-full object-contain"
+    />
+  ) : (
+    <span className="text-2xl">{charity.logoEmoji}</span>
+  )}
+</div>
         <h2 className="mt-4 text-2xl font-bold leading-tight">{charity.name}</h2>
         <p className="mt-2 text-3xl font-bold tabular-nums">{formatCurrency(userToThisCharityEur)}</p>
         <p className="mt-1 text-xs text-white/75">Contribuído por ti para esta instituição</p>
