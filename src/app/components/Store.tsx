@@ -193,8 +193,7 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
     <img
       src={c.logo}
       alt={c.name}
-      className="h-full w-full object-contain"
-    />
+    className="h-6 w-6 object-contain"    />
   ) : (
     <span className="text-xl">{c.logoEmoji}</span>
   )}
@@ -365,36 +364,42 @@ function CharityDetail({
         </button>
       </div>
 
-      <div
-        className={cn(
-          'relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br p-6 text-white shadow-lg',
-          charity.gradient,
-        )}
-      >
-        <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-white/95 p-1 shadow-md dark:bg-zinc-900/90">
-  {charity.logo ? (
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 shadow-lg">
+  {charity.image ? (
     <img
-      src={charity.logo}
+      src={charity.image}
       alt={charity.name}
-      className="h-full w-full object-contain"
+      className="absolute inset-0 h-full w-full object-cover"
     />
   ) : (
-    <span className="text-2xl">{charity.logoEmoji}</span>
+    <div className={cn('absolute inset-0 bg-gradient-to-br', charity.gradient)} />
   )}
-</div>
-        <h2 className="mt-4 text-2xl font-bold leading-tight">{charity.name}</h2>
-        <p className="mt-2 text-3xl font-bold tabular-nums">{formatCurrency(userToThisCharityEur)}</p>
-        <p className="mt-1 text-xs text-white/75">Contribuído por ti para esta instituição</p>
-        <Button
-          type="button"
-          onClick={onDonate}
-          className="mt-5 h-11 rounded-full bg-white/20 px-6 text-white backdrop-blur hover:bg-white/30"
-        >
-          <Heart className="mr-2 h-4 w-4 fill-white/30" />
-          Doar
-        </Button>
-      </div>
 
+  <div className="absolute inset-0 bg-black/50" />
+
+  <div className="relative p-6 text-white">
+    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-2xl shadow-md dark:bg-zinc-900/90">
+      {charity.logo ? (
+        <img src={charity.logo} alt={charity.name} className="h-8 w-8 object-contain" />
+      ) : (
+        charity.logoEmoji
+      )}
+    </div>
+
+    <h2 className="mt-4 text-2xl font-bold leading-tight">{charity.name}</h2>
+    <p className="mt-2 text-3xl font-bold tabular-nums">{formatCurrency(userToThisCharityEur)}</p>
+    <p className="mt-1 text-xs text-white/80">Contribuído por ti para esta instituição</p>
+
+    <Button
+      type="button"
+      onClick={onDonate}
+      className="mt-5 h-11 rounded-full bg-white/20 px-6 text-white backdrop-blur hover:bg-white/30"
+    >
+      <Heart className="mr-2 h-4 w-4 fill-white/30" />
+      Doar
+    </Button>
+  </div>
+</div>
       <div>
         <h3 className="text-sm font-semibold">Mais formas de doar</h3>
         <div className="mt-2 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">

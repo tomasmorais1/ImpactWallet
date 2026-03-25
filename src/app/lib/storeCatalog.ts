@@ -7,6 +7,10 @@ import cruzLogo from '../assets/Cruz-Vermelha_LOGO.JPG';
 import wwfLogo from '../assets/Logo_WWF.png';
 import iomImg from '../assets/IOMM.JPG';
 import iomLogo from '../assets/IOM_logo.png';
+import uniaoLogo from '../assets/Uniao_LOGO.png';
+import uniaoImg from "../assets/uniao.jpg";
+import unicefLogo from '../assets/unicef_logo.png';
+import unicefImg from '../assets/uincef.jpg';
 export const POINTS_PER_EURO = 140;
 
 export const DONATION_EURO_AMOUNTS = [10, 25, 50, 100, 150, 200] as const;
@@ -15,18 +19,20 @@ export function eurosToPoints(euros: number) {
   return Math.round(euros * POINTS_PER_EURO);
 }
 
-export type Charity = {
+export interface Charity {
   id: string;
   name: string;
+
+  logo?: string;       // 👈 opcional
+  image?: string;      // 👈 opcional
+
+  logoEmoji?: string;  // 👈 tornar opcional
+  socialProof?: string; // 👈 tornar opcional
+
+  gradient: string;
   tagline: string;
   about: string;
-  /** Tailwind gradient classes for fallback / overlay */
-  gradient: string;
-  logoEmoji: string;
-  socialProof: string;
-  image?: string;
-  logo?: string;
-};
+}
 
 export const CHARITIES: Charity[] = [
   {
@@ -76,7 +82,28 @@ export const CHARITIES: Charity[] = [
     socialProof: 'Comunidade global de conservação',
     image: wwfImg,
     logo: wwfLogo,
+
   },
+  {
+  id: 'uniao-zoofila',
+  name: 'União Zoófila',
+  logo: uniaoLogo,
+  image: uniaoImg,
+  gradient: 'from-orange-500 to-amber-500',
+  tagline: 'Proteção e cuidado de animais',
+  about: 'A União Zoófila dedica-se ao resgate, tratamento e adoção de animais abandonados em Portugal.',
+},
+
+{
+  id: 'unicef',
+  name: 'UNICEF',
+  logo: unicefLogo,
+  image: unicefImg,
+  gradient: 'from-blue-500 to-cyan-500',
+  tagline: 'Protegendo crianças no mundo',
+  about: 'UNICEF trabalha em mais de 190 países para proteger os direitos das crianças e fornecer ajuda humanitária.',
+},
+  
 ];
 export type DiscountOffer = {
   id: string;
