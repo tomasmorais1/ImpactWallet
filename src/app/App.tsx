@@ -3,6 +3,7 @@ import { GoalSetting } from './components/GoalSetting';
 import { BankConnection } from './components/BankConnection';
 import { PointsDisplay } from './components/PointsDisplay';
 import { HomeBudgetPanel } from './components/HomeBudgetPanel';
+import { ImpactSnapshotSection } from './components/ImpactSnapshotSection';
 import { ClaimPointsCard } from './components/ClaimPointsCard';
 import { FinanceScreen } from './components/FinanceScreen';
 import { RecentTransactions } from './components/RecentTransactions';
@@ -243,6 +244,7 @@ function AppContent() {
       remainingBudget={remainingBudget}
       percentageUsed={percentageUsed}
     />
+    <ImpactSnapshotSection expenses={expenses} />
     <RecentTransactions
       expenses={thisMonthExpenses}
       onSeeAll={() => setActiveTab('finance')}

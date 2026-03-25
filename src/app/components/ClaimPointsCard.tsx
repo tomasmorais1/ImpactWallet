@@ -1,8 +1,9 @@
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
-import { ChevronDown, CheckCircle2, Sparkles } from 'lucide-react';
+import { ChevronDown, CheckCircle2 } from 'lucide-react';
 import type { BudgetTierInfo } from '../lib/impactPoints';
+import impactPointsLogo from '../assets/impact-points-logo.png';
 
 interface ClaimPointsCardProps {
   tier: BudgetTierInfo;
@@ -30,7 +31,7 @@ export function ClaimPointsCard({
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm">
-            <Sparkles className="h-6 w-6" strokeWidth={2} />
+            <img src={impactPointsLogo} alt="Impact Points logo" className="h-7 w-7 object-contain" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-base font-semibold text-foreground">Monthly impact points</p>

@@ -1,4 +1,5 @@
-import { Hexagon, Sparkles, Plus, ArrowLeftRight, Landmark, Crown } from 'lucide-react';
+import { Plus, ArrowLeftRight, Landmark, Crown } from 'lucide-react';
+import impactPointsLogo from '../assets/impact-points-logo.png';
 
 interface PointsDisplayProps {
   totalPoints: number;
@@ -30,13 +31,11 @@ export function PointsDisplay({
       <p className="relative text-center text-sm font-medium text-white/85">Impact Points</p>
 
       <div className="relative mt-6 flex items-center justify-center gap-3">
-        <div className="relative flex h-[3.25rem] w-[3.25rem] shrink-0 items-center justify-center">
-          <Hexagon
-            className="absolute h-[3.25rem] w-[3.25rem] fill-white/20 stroke-white"
-            strokeWidth={1.35}
-          />
-          <Sparkles className="relative h-7 w-7 text-white" strokeWidth={2} />
-        </div>
+        <img
+          src={impactPointsLogo}
+          alt="Impact Points logo"
+          className="h-[3.25rem] w-[3.25rem] shrink-0 object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
+        />
         <span className="text-[3.25rem] font-bold leading-none tracking-tight tabular-nums">
           {totalPoints.toLocaleString()}
         </span>
