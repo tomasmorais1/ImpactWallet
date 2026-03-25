@@ -117,42 +117,53 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
   };
 
   return (
-    <div className="space-y-4 px-4 pb-4 pt-4">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold tracking-tight text-foreground">Store</h1>
-        <div className="flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5 shadow-sm">
-          <img src={impactPointsLogo} alt="" className="h-6 w-6 object-contain" />
-          <span className="text-base font-bold tabular-nums">{totalPoints.toLocaleString()}</span>
+    <div className="pb-4">
+      {/* Zona superior verde em gradiente: título, pontos e abas */}
+      <div className="relative overflow-hidden rounded-b-[1.75rem] bg-gradient-to-b from-teal-500 via-emerald-500 via-emerald-600 to-teal-800 px-4 pb-5 pt-4 text-white dark:from-teal-950 dark:via-emerald-950 dark:via-cyan-950/40 dark:to-emerald-950">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-white/10 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-12 h-48 w-48 rounded-full bg-emerald-400/25 blur-2xl dark:bg-cyan-500/20" />
+
+        <div className="relative flex items-center justify-between gap-3">
+          <h1 className="text-xl font-bold tracking-tight text-white drop-shadow-sm">Store</h1>
+          <div className="flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1.5 shadow-sm backdrop-blur-sm">
+            <img
+              src={impactPointsLogo}
+              alt=""
+              className="h-6 w-6 object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
+            />
+            <span className="text-base font-bold tabular-nums text-white">{totalPoints.toLocaleString()}</span>
+          </div>
+        </div>
+
+        <div className="relative mt-4 flex rounded-2xl border border-white/20 bg-black/15 p-1 backdrop-blur-md dark:bg-black/25">
+          {(
+            [
+              { id: 'donations' as const, label: 'Doações' },
+              { id: 'discounts' as const, label: 'Descontos' },
+              { id: 'contribution' as const, label: 'Contribuição' },
+            ] as const
+          ).map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => {
+                setTab(id);
+                setDetail(null);
+              }}
+              className={cn(
+                'flex-1 rounded-xl py-2.5 text-center text-sm transition-all',
+                tab === id
+                  ? 'bg-white font-bold text-teal-900 shadow-md dark:bg-white/20 dark:text-white dark:shadow-none'
+                  : 'font-medium text-white/80 hover:text-white dark:text-white/70',
+              )}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="flex rounded-2xl bg-muted/70 p-1 dark:bg-zinc-900/80">
-        {(
-          [
-            { id: 'donations' as const, label: 'Doações' },
-            { id: 'discounts' as const, label: 'Descontos' },
-            { id: 'contribution' as const, label: 'Contribuição' },
-          ] as const
-        ).map(({ id, label }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => {
-              setTab(id);
-              setDetail(null);
-            }}
-            className={cn(
-              'flex-1 rounded-xl py-2.5 text-center text-sm transition-all',
-              tab === id
-                ? 'bg-background font-bold text-foreground shadow-sm dark:bg-zinc-800 dark:text-white'
-                : 'font-medium text-muted-foreground dark:text-zinc-500',
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
+      <div className="space-y-4 px-4 pt-4">
       {tab === 'donations' && !detail && (
         <section className="space-y-3">
           <p className="text-sm text-muted-foreground">Instituições de caridade</p>
@@ -292,6 +303,7 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
           </Button>
         </SheetContent>
       </Sheet>
+      </div>
     </div>
   );
 }
