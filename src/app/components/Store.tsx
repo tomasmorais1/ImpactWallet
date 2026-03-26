@@ -7,12 +7,12 @@ import {
   Leaf,
   Repeat,
   Sparkles,
-  Tag,
-  Coins,
   Users,
   Share2,
+  MapPin,
 } from 'lucide-react';
 import { Button } from './ui/button';
+import { Progress } from './ui/progress';
 import { Switch } from './ui/switch';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 import { cn } from './ui/utils';
@@ -22,7 +22,13 @@ import {
   CHARITIES,
   DISCOUNT_OFFERS,
   DONATION_EURO_AMOUNTS,
+  LEIRIA_CAMPAIGN_ABOUT,
+  LEIRIA_CAMPAIGN_GOAL_EUR,
+  LEIRIA_CAMPAIGN_GOAL_POINTS,
+  LEIRIA_CAMPAIGN_ID,
   MOCK_GLOBAL_CONTRIBUTORS,
+  addLeiriaCampaignPoints,
+  getLeiriaCampaignRaisedPoints,
   MOCK_GLOBAL_DONATIONS_EUR,
   POINTS_PER_EURO,
   USER_DONATION_BY_CHARITY_KEY,
@@ -30,6 +36,7 @@ import {
   type Charity,
   type DiscountOffer,
   eurosToPoints,
+  pointsToEuros,
 } from '../lib/storeCatalog';
 import { toast } from 'sonner';
 
@@ -64,14 +71,65 @@ function persistDonation(charityId: string, euroAmount: number) {
   localStorage.setItem(USER_DONATION_BY_CHARITY_KEY, JSON.stringify(by));
 }
 
+function LeiriaCampaignCard({ onOpen }: { onOpen: () => void }) {
+  const raised = getLeiriaCampaignRaisedPoints();
+  const goal = LEIRIA_CAMPAIGN_GOAL_POINTS;
+  const pct = Math.min(100, (raised / goal) * 100);
+  const raisedEur = pointsToEuros(raised);
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={cn(
+        'relative w-full overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br p-4 text-left text-white shadow-lg transition hover:opacity-[0.98] active:scale-[0.99]',
+        'from-teal-700/95 via-emerald-800/95 to-teal-950/90 dark:from-teal-950 dark:via-emerald-950 dark:to-zinc-950',
+      )}
+    >
+      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+      <div className="pointer-events-none absolute -bottom-6 left-1/3 h-20 w-20 rounded-full bg-amber-400/15 blur-xl" />
+
+      <div className="relative flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
+          <MapPin className="h-5 w-5 text-white" strokeWidth={2.25} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-lg font-bold leading-tight tracking-tight">Ajuda Leiria</h3>
+          <p className="mt-1 text-xs leading-snug text-white/85">
+            Contribuição global da comunidade Impact Wallet para apoiar projetos na região.
+          </p>
+        </div>
+        <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-white/70" aria-hidden />
+      </div>
+
+      <div className="relative mt-4 space-y-2">
+        <div className="flex items-baseline justify-between gap-2 text-xs font-medium tabular-nums">
+          <span className="text-white">
+            {raised.toLocaleString('pt-PT')} pts
+            <span className="ml-1 font-normal text-white/70">
+              (~{raisedEur.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} €)
+            </span>
+          </span>
+          <span className="shrink-0 text-white/80">
+            {goal.toLocaleString('pt-PT')} pts · {LEIRIA_CAMPAIGN_GOAL_EUR.toLocaleString('pt-PT')} €
+          </span>
+        </div>
+        <Progress value={pct} className="h-2.5 bg-white/20" indicatorClassName="bg-white shadow-sm" />
+      </div>
+    </button>
+  );
+}
+
 export function Store({ totalPoints, onRedeem }: StoreProps) {
   const { formatCurrency } = useSettings();
   const [tab, setTab] = useState<StoreTab>('donations');
   const [detail, setDetail] = useState<Charity | null>(null);
+  const [leiriaDetailOpen, setLeiriaDetailOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [selectedEur, setSelectedEur] = useState<number>(10);
   const [recurring, setRecurring] = useState(false);
   const [userDonationEur, setUserDonationEur] = useState(readUserDonationEur);
+  const [leiriaProgressKey, setLeiriaProgressKey] = useState(0);
 
   const refreshUserTotal = useCallback(() => setUserDonationEur(readUserDonationEur()), []);
 
@@ -84,24 +142,38 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
     return readDonationByCharity()[detail.id] || 0;
   }, [detail, userDonationEur]);
 
+  const userLeiriaCampaignEur = useMemo(
+    () => readDonationByCharity()[LEIRIA_CAMPAIGN_ID] || 0,
+    [userDonationEur],
+  );
+
   const openDonate = () => setDonateOpen(true);
 
   const netToCharity = (eur: number) => Math.max(0, eur * 0.865);
 
   const confirmDonation = () => {
-    if (!detail) return;
+    const recipient = detail
+      ? { id: detail.id, name: detail.name }
+      : leiriaDetailOpen
+        ? { id: LEIRIA_CAMPAIGN_ID, name: 'Ajuda Leiria' }
+        : null;
+    if (!recipient) return;
     const pts = eurosToPoints(selectedEur);
     if (totalPoints < pts) {
       toast.error('Não tens pontos suficientes.');
       return;
     }
-    onRedeem(pts, `Doação ${selectedEur} € · ${detail.name}`);
-    persistDonation(detail.id, selectedEur);
+    onRedeem(pts, `Doação ${selectedEur} € · ${recipient.name}`);
+    persistDonation(recipient.id, selectedEur);
+    if (recipient.id === LEIRIA_CAMPAIGN_ID) {
+      addLeiriaCampaignPoints(pts);
+      setLeiriaProgressKey((k) => k + 1);
+    }
     refreshUserTotal();
     toast.success(
       recurring
-        ? `Doação recorrente ativada: ${selectedEur} € / mês em pontos para ${detail.name}`
-        : `Doação de ${selectedEur} € registada para ${detail.name}`,
+        ? `Doação recorrente ativada: ${selectedEur} € / mês em pontos para ${recipient.name}`
+        : `Doação de ${selectedEur} € registada para ${recipient.name}`,
     );
     setDonateOpen(false);
     setRecurring(false);
@@ -149,6 +221,7 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
               onClick={() => {
                 setTab(id);
                 setDetail(null);
+                setLeiriaDetailOpen(false);
               }}
               className={cn(
                 'flex-1 rounded-xl py-2.5 text-center text-sm transition-all',
@@ -164,15 +237,26 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
       </div>
 
       <div className="space-y-4 px-4 pt-4">
-      {tab === 'donations' && !detail && (
+      {tab === 'donations' && !detail && !leiriaDetailOpen && (
         <section className="space-y-3">
+          <p className="text-sm text-muted-foreground">Campanha</p>
+          <LeiriaCampaignCard
+            key={leiriaProgressKey}
+            onOpen={() => {
+              setDetail(null);
+              setLeiriaDetailOpen(true);
+            }}
+          />
           <p className="text-sm text-muted-foreground">Instituições de caridade</p>
           <div className="grid grid-cols-2 gap-3">
             {CHARITIES.map((c) => (
               <button
   key={c.id}
   type="button"
-  onClick={() => setDetail(c)}
+  onClick={() => {
+                setLeiriaDetailOpen(false);
+                setDetail(c);
+              }}
   className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-border/60 text-left shadow-sm transition hover:opacity-[0.98] active:scale-[0.99]"
 >
   {c.image ? (
@@ -207,6 +291,20 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
             ))}
           </div>
         </section>
+      )}
+
+      {tab === 'donations' && leiriaDetailOpen && !detail && (
+        <LeiriaCampaignDetail
+          userToCampaignEur={userLeiriaCampaignEur}
+          globalUserTotalEur={userDonationEur}
+          formatCurrency={formatCurrency}
+          onBack={() => setLeiriaDetailOpen(false)}
+          onDonate={openDonate}
+          onSelectCharity={(c) => {
+            setLeiriaDetailOpen(false);
+            setDetail(c);
+          }}
+        />
       )}
 
       {tab === 'donations' && detail && (
@@ -255,7 +353,8 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
           <SheetHeader className="space-y-1 text-left">
             <SheetTitle className="text-lg">Doar com pontos</SheetTitle>
             <p className="text-sm text-muted-foreground">
-              {detail?.name ?? 'Instituição'} · equivalência {POINTS_PER_EURO} pts = 1 €
+              {detail?.name ?? (leiriaDetailOpen ? 'Ajuda Leiria' : 'Instituição')} · equivalência{' '}
+              {POINTS_PER_EURO} pts = 1 €
             </p>
           </SheetHeader>
 
@@ -309,7 +408,9 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
             type="button"
             className="mt-5 h-12 w-full rounded-2xl bg-foreground text-background hover:bg-foreground/90"
             onClick={confirmDonation}
-            disabled={!detail || totalPoints < eurosToPoints(selectedEur)}
+            disabled={
+              (!detail && !leiriaDetailOpen) || totalPoints < eurosToPoints(selectedEur)
+            }
           >
             Confirmar doação · {eurosToPoints(selectedEur).toLocaleString()} pts
           </Button>
@@ -324,6 +425,160 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
         </SheetContent>
       </Sheet>
       </div>
+    </div>
+  );
+}
+
+function LeiriaCampaignDetail({
+  userToCampaignEur,
+  globalUserTotalEur,
+  formatCurrency,
+  onBack,
+  onDonate,
+  onSelectCharity,
+}: {
+  userToCampaignEur: number;
+  globalUserTotalEur: number;
+  formatCurrency: (n: number) => string;
+  onBack: () => void;
+  onDonate: () => void;
+  onSelectCharity: (c: Charity) => void;
+}) {
+  const raised = getLeiriaCampaignRaisedPoints();
+  const goal = LEIRIA_CAMPAIGN_GOAL_POINTS;
+  const pct = Math.min(100, (raised / goal) * 100);
+  const raisedEur = pointsToEuros(raised);
+  const others = CHARITIES.slice(0, 6);
+  const networkTotalDemo = 89_732.5;
+
+  return (
+    <div className="space-y-5 pb-6">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted"
+          aria-label="Voltar"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          className="ml-auto flex h-9 w-9 items-center justify-center rounded-full bg-muted"
+          aria-label="Partilhar"
+        >
+          <Share2 className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div
+        className={cn(
+          'relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br p-6 text-white shadow-lg',
+          'from-teal-700 via-emerald-800 to-teal-950 dark:from-teal-950 dark:via-emerald-950 dark:to-zinc-950',
+        )}
+      >
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-10 left-1/4 h-32 w-32 rounded-full bg-amber-400/15 blur-2xl" />
+
+        <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur">
+          <MapPin className="h-7 w-7 text-white" strokeWidth={2.25} />
+        </div>
+
+        <h2 className="mt-4 text-2xl font-bold leading-tight">Ajuda Leiria</h2>
+        <p className="mt-2 text-sm leading-snug text-white/85">
+          Objetivo da comunidade: {goal.toLocaleString('pt-PT')} pts ·{' '}
+          {LEIRIA_CAMPAIGN_GOAL_EUR.toLocaleString('pt-PT')} €
+        </p>
+
+        <div className="relative mt-4 space-y-2">
+          <div className="flex justify-between text-xs font-medium tabular-nums text-white/90">
+            <span>
+              {raised.toLocaleString('pt-PT')} pts (~
+              {raisedEur.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} €)
+            </span>
+            <span className="text-white/75">global</span>
+          </div>
+          <Progress value={pct} className="h-2.5 bg-white/20" indicatorClassName="bg-white shadow-sm" />
+        </div>
+
+        <p className="relative mt-4 text-3xl font-bold tabular-nums">{formatCurrency(userToCampaignEur)}</p>
+        <p className="relative mt-1 text-xs text-white/80">Contribuído por ti para esta campanha</p>
+
+        <Button
+          type="button"
+          onClick={onDonate}
+          className="relative mt-5 h-11 rounded-full bg-white/20 px-6 text-white backdrop-blur hover:bg-white/30"
+        >
+          <Heart className="mr-2 h-4 w-4 fill-white/30" />
+          Doar
+        </Button>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold">Mais formas de doar</h3>
+        <div className="mt-2 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+          <RowAction
+            icon={<img src={impactPointsLogo} alt="" className="h-5 w-5 object-contain" />}
+            title="Doar com pontos"
+            subtitle="Escolhe o montante em euros e paga em pontos (100 pts = 1 €)"
+            onClick={onDonate}
+          />
+          <RowAction
+            icon={<Repeat className="h-5 w-5 text-sky-500" />}
+            title="Doação recorrente"
+            subtitle="No ecrã de doação, ativa a renovação mensal em pontos"
+            onClick={onDonate}
+          />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold">Sobre a campanha</h3>
+        <p className="mt-2 whitespace-pre-line rounded-2xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground">
+          {LEIRIA_CAMPAIGN_ABOUT}
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-muted/30 p-4">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>Contribuições Impact Wallet a esta campanha</span>
+        </div>
+        <div className="mt-2 flex items-end justify-between gap-2">
+          <span className="text-sm text-muted-foreground">Total angariado (demonstrativo)</span>
+          <span className="text-lg font-bold tabular-nums">{formatCurrency(networkTotalDemo)}</span>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          O teu total global em doações (todas as instituições e campanhas):{' '}
+          <strong className="text-foreground">{formatCurrency(globalUserTotalEur)}</strong>
+        </p>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Instituições de caridade</h3>
+        </div>
+        <div className="mt-3 flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {others.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => onSelectCharity(c)}
+              className="w-36 shrink-0 overflow-hidden rounded-xl border border-border text-left shadow-sm"
+            >
+              {c.image ? (
+                <img src={c.image} alt="" className="h-24 w-full object-cover" />
+              ) : (
+                <div className={cn('h-24 bg-gradient-to-br', c.gradient)} />
+              )}
+              <div className="p-2">
+                <p className="text-xs font-semibold leading-tight">{c.name}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-center text-[10px] text-muted-foreground">Valores demonstrativos · Impact Wallet</p>
     </div>
   );
 }
@@ -414,12 +669,6 @@ function CharityDetail({
             title="Doação recorrente"
             subtitle="Define um valor mensal em pontos"
             onClick={onDonate}
-          />
-          <RowAction
-            icon={<Coins className="h-5 w-5 text-amber-500" />}
-            title="Trocos"
-            subtitle="Arredonda os teus gastos diários"
-            onClick={() => toast.info('Brevemente: arredondamento de trocos.')}
           />
         </div>
       </div>
