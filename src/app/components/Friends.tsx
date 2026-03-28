@@ -108,6 +108,7 @@ export function Friends({
   const [selectedGroupMembers, setSelectedGroupMembers] = useState<string[]>([]);
   const [showAddPointsSheet, setShowAddPointsSheet] = useState(false);
   const [selectedGroupPoints, setSelectedGroupPoints] = useState<number>(0);
+  const [showChatSheet, setShowChatSheet] = useState(false);
 
   const [friends] = useState<Friend[]>([
     {
@@ -278,6 +279,7 @@ export function Friends({
     setSelectedGroupMembers([]);
     setShowCreateGroup(false);
     setSelectedGroupId(newGroup.id);
+    setShowChatSheet(true);
   };
 
   const handleSendChatMessage = () => {
@@ -630,17 +632,13 @@ export function Friends({
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Groups</CardTitle>
-                  <CardDescription>Open the chat without leaving this page</CardDescription>
+                  <CardDescription>Open the chat in a modal</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {groups.map((group) => (
                     <div
                       key={group.id}
-                      className={`w-full rounded-xl border p-4 transition ${
-                        selectedGroupId === group.id
-                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
-                          : 'bg-white dark:bg-background'
-                      }`}
+                      className="w-full rounded-xl border bg-white p-4 dark:bg-background"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
@@ -661,188 +659,19 @@ export function Friends({
                         <Button
                           size="sm"
                           className="shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-700"
-                          onClick={() =>
-                            setSelectedGroupId((prev) => (prev === group.id ? null : group.id))
-                          }
+                          onClick={() => {
+                            setSelectedGroupId(group.id);
+                            setShowChatSheet(true);
+                          }}
                         >
                           <MessageCircle className="mr-1.5 h-4 w-4" />
-                          {selectedGroupId === group.id ? 'Close' : 'Chat'}
+                          Chat
                         </Button>
                       </div>
                     </div>
                   ))}
                 </CardContent>
               </Card>
-
-              {selectedGroup && (
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <CardTitle className="flex items-center gap-2 text-base">
-                          {selectedGroup.name}
-                          {selectedGroup.adminId === currentUser.id && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                              <Crown className="h-3 w-3" />
-                              Admin
-                            </span>
-                          )}
-                        </CardTitle>
-                        <CardDescription>{selectedGroup.members.length} members</CardDescription>
-                      </div>
-
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedGroupId(null);
-                          setChatInput('');
-                        }}
-                      >
-                        Close
-                      </Button>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      {selectedGroup.members.map((member) => (
-                        <span
-                          key={member.id}
-                          className="rounded-full bg-secondary px-2.5 py-1 text-xs text-muted-foreground"
-                        >
-                          {member.name}
-                          {member.id === selectedGroup.adminId ? ' • admin' : ''}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="flex justify-center">
-                      <div className="rounded-full border border-border bg-muted/30 px-4 py-2 text-sm font-semibold">
-                        Group Points: {selectedGroup.groupPoints}
-                      </div>
-                    </div>
-
-                    <div className="h-[360px] space-y-3 overflow-y-auto rounded-2xl border bg-muted/20 p-3">
-                      {selectedGroup.chatMessages
-                        .filter((message) => message.type !== 'system')
-                        .map((message) => {
-                          const isMe = message.authorName === currentUser.name;
-
-                          return (
-                            <div key={message.id}>
-                              <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                <div
-                                  className={`flex max-w-[78%] flex-col ${
-                                    isMe ? 'items-end' : 'items-start'
-                                  }`}
-                                >
-                                  <span className="mb-1 px-1 text-[11px] text-muted-foreground">
-                                    {message.authorName}
-                                  </span>
-
-                                  <div
-                                    className={`rounded-2xl px-3 py-2 text-sm shadow-sm ${
-                                      isMe
-                                        ? 'rounded-br-md bg-emerald-600 text-white'
-                                        : 'rounded-bl-md border bg-background text-foreground'
-                                    }`}
-                                  >
-                                    {message.text}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {message.type === 'vote' && selectedGroup.activeVote && (
-                                <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/30">
-                                  <div className="space-y-1">
-                                    <p className="text-sm font-semibold">
-                                      {selectedGroup.activeVote.ngoName}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {selectedGroup.activeVote.euroAmount} € · {selectedGroup.activeVote.points} pts
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      Status: {selectedGroup.activeVote.status}
-                                    </p>
-                                  </div>
-
-                                  <div className="mt-3 space-y-1">
-                                    {selectedGroup.activeVote.votes.map((vote) => (
-                                      <p key={vote.friendId} className="text-xs text-muted-foreground">
-                                        {getMemberName(selectedGroup, vote.friendId)} voted{' '}
-                                        <span
-                                          className={
-                                            vote.vote === 'yes' ? 'text-emerald-600' : 'text-red-500'
-                                          }
-                                        >
-                                          {vote.vote.toUpperCase()}
-                                        </span>
-                                      </p>
-                                    ))}
-                                  </div>
-
-                                  {!selectedGroup.activeVote.votes.some(
-                                    (vote) => vote.friendId === currentUser.id
-                                  ) && selectedGroup.activeVote.status === 'open' && (
-                                    <div className="mt-3 flex gap-2">
-                                      <Button
-                                        className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                                        onClick={() => handleVote(selectedGroup.id, 'yes')}
-                                      >
-                                        Vote Yes
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        className="flex-1"
-                                        onClick={() => handleVote(selectedGroup.id, 'no')}
-                                      >
-                                        Vote No
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                    </div>
-
-                    <div className="flex items-center gap-2 rounded-2xl border bg-background p-2">
-                      <Input
-                        placeholder="Write a message..."
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSendChatMessage();
-                        }}
-                        className="border-0 bg-transparent shadow-none focus-visible:ring-0"
-                      />
-
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-10 w-10 rounded-full p-0"
-                        onClick={() => {
-                          setSelectedGroupPoints(Math.min(100, totalPoints));
-                          setShowAddPointsSheet(true);
-                        }}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        className="h-10 w-10 rounded-full bg-emerald-600 p-0 hover:bg-emerald-700"
-                        onClick={handleSendChatMessage}
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               <Input
                 placeholder="Search friends..."
@@ -898,6 +727,7 @@ export function Friends({
                           <Send className="mr-1.5 h-3.5 w-3.5" />
                           Send
                         </Button>
+
                         <Button
                           size="sm"
                           className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
@@ -915,6 +745,185 @@ export function Friends({
           )}
         </div>
 
+        <Sheet
+          open={showChatSheet && !!selectedGroup}
+          onOpenChange={(open) => {
+            setShowChatSheet(open);
+            if (!open) {
+              setSelectedGroupId(null);
+              setChatInput('');
+            }
+          }}
+        >
+          <SheetContent
+            side="bottom"
+            className="h-[78vh] overflow-y-hidden rounded-t-3xl border-t bg-background px-0 pb-0 pt-0 sm:mx-auto sm:max-w-md"
+          >
+            {selectedGroup && (
+              <div className="flex h-full flex-col">
+                <div className="border-b px-4 pb-3 pt-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-semibold">{selectedGroup.name}</h3>
+                        {selectedGroup.adminId === currentUser.id && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                            <Crown className="h-3 w-3" />
+                            Admin
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {selectedGroup.members.length} members
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {selectedGroup.members.map((member) => (
+                      <span
+                        key={member.id}
+                        className="rounded-full bg-secondary px-2.5 py-1 text-xs text-muted-foreground"
+                      >
+                        {member.name}
+                        {member.id === selectedGroup.adminId ? ' • admin' : ''}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-3">
+                    <div className="inline-flex rounded-full border border-border bg-muted/30 px-4 py-2 text-sm font-semibold">
+                      Group Points: {selectedGroup.groupPoints}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto bg-muted/20 px-4 py-4">
+                  <div className="space-y-3">
+                    {selectedGroup.chatMessages
+                      .filter((message) => message.type !== 'system')
+                      .map((message) => {
+                        const isMe = message.authorName === currentUser.name;
+
+                        return (
+                          <div key={message.id}>
+                            <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                              <div
+                                className={`flex max-w-[78%] flex-col ${
+                                  isMe ? 'items-end' : 'items-start'
+                                }`}
+                              >
+                                <span className="mb-1 px-1 text-[11px] text-muted-foreground">
+                                  {message.authorName}
+                                </span>
+
+                                <div
+                                  className={`rounded-2xl px-3 py-2 text-sm shadow-sm ${
+                                    isMe
+                                      ? 'rounded-br-md bg-emerald-600 text-white'
+                                      : 'rounded-bl-md border bg-background text-foreground'
+                                  }`}
+                                >
+                                  {message.text}
+                                </div>
+                              </div>
+                            </div>
+
+                            {message.type === 'vote' && selectedGroup.activeVote && (
+                              <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/30">
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold">
+                                    {selectedGroup.activeVote.ngoName}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {selectedGroup.activeVote.euroAmount} € · {selectedGroup.activeVote.points} pts
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Status: {selectedGroup.activeVote.status}
+                                  </p>
+                                </div>
+
+                                <div className="mt-3 space-y-1">
+                                  {selectedGroup.activeVote.votes.map((vote) => (
+                                    <p key={vote.friendId} className="text-xs text-muted-foreground">
+                                      {getMemberName(selectedGroup, vote.friendId)} voted{' '}
+                                      <span
+                                        className={
+                                          vote.vote === 'yes' ? 'text-emerald-600' : 'text-red-500'
+                                        }
+                                      >
+                                        {vote.vote.toUpperCase()}
+                                      </span>
+                                    </p>
+                                  ))}
+                                </div>
+
+                                {!selectedGroup.activeVote.votes.some(
+                                  (vote) => vote.friendId === currentUser.id
+                                ) && selectedGroup.activeVote.status === 'open' && (
+                                  <div className="mt-3 flex gap-2">
+                                    <Button
+                                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                                      onClick={() => handleVote(selectedGroup.id, 'yes')}
+                                    >
+                                      Vote Yes
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      className="flex-1"
+                                      onClick={() => handleVote(selectedGroup.id, 'no')}
+                                    >
+                                      Vote No
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+
+                <div className="border-t bg-background px-4 py-3">
+                  <div className="flex items-center gap-2 rounded-2xl border bg-background p-2">
+                    <Input
+                      placeholder="Write a message..."
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSendChatMessage();
+                      }}
+                      className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+                    />
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-10 w-10 rounded-full p-0"
+                      onClick={() => {
+                        setSelectedGroupPoints(Math.min(100, totalPoints));
+                        setShowAddPointsSheet(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      className="h-10 w-10 rounded-full bg-emerald-600 p-0 hover:bg-emerald-700"
+                      onClick={handleSendChatMessage}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
+
         <Sheet open={showAddPointsSheet} onOpenChange={setShowAddPointsSheet}>
           <SheetContent
             side="bottom"
@@ -927,7 +936,8 @@ export function Friends({
               </p>
             </SheetHeader>
 
-<div className="mt-0.5 rounded-xl border border-dashed border-border bg-muted/20 p-1.5 text-[11px] leading-tight text-muted-foreground">              <div className="flex items-center justify-between">
+            <div className="mt-1 rounded-2xl border border-border bg-muted/20 p-2 space-y-1.5">
+              <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Points</span>
                 <span className="text-xl font-bold tabular-nums">{selectedGroupPoints}</span>
               </div>
@@ -963,15 +973,10 @@ export function Friends({
                 {(selectedGroup?.groupPoints ?? 0) + selectedGroupPoints} pts
               </strong>
             </div>
-
-            <div className="mt-1 rounded-xl border border-border bg-muted/30 p-2 text-[11px] leading-tight text-muted-foreground">
-              You currently have <strong className="text-foreground">{totalPoints} pts</strong>.
-            </div>
-
             <Button
               type="button"
-              className="mt-1.5 h-10 w-full rounded-2xl bg-foreground text-background hover:bg-foreground/90"
-              onClick={handleAddPointsToGroup}
+             className="mt-1 h-10 w-full rounded-2xl bg-foreground text-background hover:bg-foreground/90" 
+               onClick={handleAddPointsToGroup}
               disabled={selectedGroupPoints <= 0 || selectedGroupPoints > totalPoints}
             >
               Confirm add · {selectedGroupPoints} pts

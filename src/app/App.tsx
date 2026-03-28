@@ -14,7 +14,7 @@ import { ProfileScreen } from './components/ProfileScreen';
 import { Login } from './components/Login';
 import { Friends } from './components/Friends';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
-import { Home, ShoppingBag, Wallet, Users, User } from 'lucide-react';
+import { Home, ShoppingBag, Wallet, Users, User, ArrowLeft } from 'lucide-react';
 import { Card, CardContent } from './components/ui/card';
 import { toast } from 'sonner';
 import { Toaster } from './components/ui/sonner';
@@ -344,32 +344,79 @@ function AppContent() {
         )}
 
         {activeTab === 'premium' && (
-          <div className="space-y-4 px-4 pt-4">
-            <Card className="border-0 bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+          <div className="space-y-4 px-4 pb-6 pt-4">
+            <button
+              type="button"
+              onClick={() => setActiveTab('home')}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background shadow-sm transition hover:bg-muted"
+              aria-label="Back to home"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+
+            <Card className="overflow-hidden border-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 text-white shadow-lg">
               <CardContent className="p-6 text-center">
-                <h2 className="mb-2 text-xl font-bold">Go Premium 🚀</h2>
-                <p className="text-sm opacity-90">Unlock the full power of Impact Wallet</p>
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-2xl">✨</span>
+                </div>
+                <h2 className="mb-2 text-2xl font-bold">Impact Wallet Premium</h2>
+                <p className="text-sm text-white/90">
+                  Mais inteligência, mais controlo e mais vantagens todos os meses
+                </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="space-y-3 p-4 text-sm">
-                <p>✅ Advanced analytics</p>
-                <p>✅ Double reward points</p>
-                <p>✅ Exclusive discounts</p>
-                <p>✅ Priority support</p>
+            <Card className="border-border/80 shadow-sm">
+              <CardContent className="space-y-3 p-5">
+                <div className="flex items-start gap-3">
+                  <span className="text-emerald-600">✅</span>
+                  <p className="text-sm font-medium">+ 10 pontos por mês</p>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="text-emerald-600">✅</span>
+                  <p className="text-sm font-medium">Inteligência artificial que ajuda</p>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="text-emerald-600">✅</span>
+                  <p className="text-sm font-medium">Melhor previsão financeira</p>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="text-emerald-600">✅</span>
+                  <p className="text-sm font-medium">Desafios por mês</p>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="text-emerald-600">✅</span>
+                  <p className="text-sm font-medium">Ofertas / descontos exclusivas</p>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="text-emerald-600">✅</span>
+                  <p className="text-sm font-medium">Alertas inteligentes</p>
+                </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="space-y-3 p-6 text-center">
-                <p className="text-2xl font-bold">19,99€ / month</p>
+            <Card className="border-border/80 shadow-sm">
+              <CardContent className="space-y-4 p-6 text-center">
+                <div>
+                  <p className="text-sm text-muted-foreground">Plano mensal</p>
+                  <p className="mt-1 text-4xl font-bold tracking-tight">2,99€</p>
+                  <p className="mt-1 text-sm text-muted-foreground">por mês</p>
+                </div>
+
                 <button
+                  type="button"
                   onClick={() => alert('Premium activated!')}
-                  className="w-full rounded-xl bg-emerald-600 py-3 text-white hover:bg-emerald-700"
+                  className="w-full rounded-2xl bg-emerald-600 py-3.5 text-base font-semibold text-white transition hover:bg-emerald-700"
                 >
                   Upgrade Now
                 </button>
+
+                <p className="text-xs text-muted-foreground">Cancela quando quiseres</p>
               </CardContent>
             </Card>
           </div>
