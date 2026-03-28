@@ -43,9 +43,25 @@ import {
 } from '../lib/storeCatalog';
 import { toast } from 'sonner';
 
+export interface StoreGroupOption {
+  id: string;
+  name: string;
+}
+
+export interface GroupDonationVotePayload {
+  groupId: string;
+  ngoId: string;
+  ngoName: string;
+  euroAmount: number;
+  points: number;
+}
+
 interface StoreProps {
   totalPoints: number;
   onRedeem: (cost: number, label: string) => void;
+  isGroupAdmin?: boolean;
+  adminGroups?: StoreGroupOption[];
+  onCreateGroupDonationVote?: (payload: GroupDonationVotePayload) => void;
 }
 
 type StoreTab = 'donations' | 'discounts' | 'contribution';
@@ -148,14 +164,23 @@ function LeiriaCampaignCard({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-export function Store({ totalPoints, onRedeem }: StoreProps) {
+export function Store({
+  totalPoints,
+  onRedeem,
+  isGroupAdmin = false,
+  adminGroups = [],
+  onCreateGroupDonationVote,
+}: StoreProps) {
   const { formatCurrency } = useSettings();
+
   const [tab, setTab] = useState<StoreTab>('donations');
   const [detail, setDetail] = useState<Charity | null>(null);
   const [leiriaDetailOpen, setLeiriaDetailOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
+  const [groupDonateOpen, setGroupDonateOpen] = useState(false);
   const [selectedEur, setSelectedEur] = useState<number>(10);
   const [recurring, setRecurring] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [userDonationEur, setUserDonationEur] = useState(readUserDonationEur);
   const [leiriaProgressKey, setLeiriaProgressKey] = useState(0);
   const [pastCampaignsOpen, setPastCampaignsOpen] = useState(false);
@@ -183,36 +208,80 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
     [userDonationEur],
   );
 
+  const donationRecipient = useMemo(() => {
+    if (detail) return { id: detail.id, name: detail.name };
+    if (leiriaDetailOpen) return { id: LEIRIA_CAMPAIGN_ID, name: 'Ajuda Leiria' };
+    return null;
+  }, [detail, leiriaDetailOpen]);
+
+  const selectedGroup = useMemo(
+    () => adminGroups.find((group) => group.id === selectedGroupId) ?? null,
+    [adminGroups, selectedGroupId],
+  );
+
   const openDonate = () => setDonateOpen(true);
+  const openDonateInGroup = () => setGroupDonateOpen(true);
 
   const netToCharity = (eur: number) => Math.max(0, eur * 0.865);
 
   const confirmDonation = () => {
-    const recipient = detail
-      ? { id: detail.id, name: detail.name }
-      : leiriaDetailOpen
-        ? { id: LEIRIA_CAMPAIGN_ID, name: 'Ajuda Leiria' }
-        : null;
+    const recipient = donationRecipient;
     if (!recipient) return;
+
     const pts = eurosToPoints(selectedEur);
+
     if (totalPoints < pts) {
       toast.error('Não tens pontos suficientes.');
       return;
     }
+
     onRedeem(pts, `Doação ${selectedEur} € · ${recipient.name}`);
     persistDonation(recipient.id, selectedEur);
+
     if (recipient.id === LEIRIA_CAMPAIGN_ID) {
       addLeiriaCampaignPoints(pts);
       setLeiriaProgressKey((k) => k + 1);
     }
+
     refreshUserTotal();
+
     toast.success(
       recurring
         ? `Doação recorrente ativada: ${selectedEur} € / mês em pontos para ${recipient.name}`
         : `Doação de ${selectedEur} € registada para ${recipient.name}`,
     );
+
     setDonateOpen(false);
     setRecurring(false);
+  };
+
+  const confirmGroupDonationVote = () => {
+    const recipient = donationRecipient;
+    if (!recipient) return;
+
+    if (!selectedGroupId) {
+      toast.error('Seleciona um grupo.');
+      return;
+    }
+
+    const pts = eurosToPoints(selectedEur);
+
+    if (totalPoints < pts) {
+      toast.error('Não tens pontos suficientes.');
+      return;
+    }
+
+    onCreateGroupDonationVote?.({
+      groupId: selectedGroupId,
+      ngoId: recipient.id,
+      ngoName: recipient.name,
+      euroAmount: selectedEur,
+      points: pts,
+    });
+
+    toast.success(`Votação criada no chat do grupo para ${recipient.name}`);
+    setGroupDonateOpen(false);
+    setSelectedGroupId('');
   };
 
   const redeemDiscount = (offer: DiscountOffer) => {
@@ -220,13 +289,13 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
       toast.error('Não tens pontos suficientes.');
       return;
     }
+
     onRedeem(offer.costPoints, `Desconto ${offer.brand} · ${offer.title}`);
     toast.success(`Código enviado: ${offer.brand} — ${offer.title}`);
   };
 
   return (
     <div className="pb-4">
-      {/* Zona superior verde em gradiente: título, pontos e abas */}
       <div className="relative overflow-hidden rounded-b-[1.75rem] bg-gradient-to-b from-teal-500 via-emerald-500 via-emerald-600 to-teal-800 px-4 pb-5 pt-4 text-white dark:from-teal-950 dark:via-emerald-950 dark:via-cyan-950/40 dark:to-emerald-950">
         <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-white/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-16 -left-12 h-48 w-48 rounded-full bg-emerald-400/25 blur-2xl dark:bg-cyan-500/20" />
@@ -239,7 +308,9 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
               alt=""
               className="h-6 w-6 object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
             />
-            <span className="text-base font-bold tabular-nums text-white">{totalPoints.toLocaleString()}</span>
+            <span className="text-base font-bold tabular-nums text-white">
+              {totalPoints.toLocaleString()}
+            </span>
           </div>
         </div>
 
@@ -274,9 +345,9 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
       </div>
 
       <div className="space-y-4 px-4 pt-4">
-      {tab === 'donations' && !detail && !leiriaDetailOpen && (
-        <section className="space-y-3">
-          <button
+        {tab === 'donations' && !detail && !leiriaDetailOpen && (
+          <section className="space-y-3">
+            <button
             type="button"
             onClick={() => setPastCampaignsOpen((o) => !o)}
             className="flex w-full items-center justify-between gap-2 rounded-lg py-0.5 text-left text-sm text-muted-foreground transition hover:text-foreground"
@@ -295,14 +366,15 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
             </span>
           </button>
 
-          <LeiriaCampaignCard
-            key={leiriaProgressKey}
-            onOpen={() => {
-              setDetail(null);
-              setLeiriaDetailOpen(true);
-            }}
-          />
+            <LeiriaCampaignCard
+              key={leiriaProgressKey}
+              onOpen={() => {
+                setDetail(null);
+                setLeiriaDetailOpen(true);
+              }}
+            />
 
+  
           <div
             className={cn(
               'grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none',
@@ -327,182 +399,270 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
             </div>
           </div>
           <p className="text-sm text-muted-foreground">Instituições de caridade</p>
-          <div className="grid grid-cols-2 gap-3">
-            {CHARITIES.map((c) => (
-              <button
-  key={c.id}
-  type="button"
-  onClick={() => {
-                setLeiriaDetailOpen(false);
-                setDetail(c);
-              }}
-  className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-border/60 text-left shadow-sm transition hover:opacity-[0.98] active:scale-[0.99]"
->
-  {c.image ? (
-    <>
-      <img
-        src={c.image}
-        alt={c.name}
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      <div className="absolute inset-0 bg-black/25" />
-    </>
-  ) : (
-    <div className={cn('absolute inset-0 bg-gradient-to-br', c.gradient)} />
-  )}
-
-  <div className="absolute left-3 top-3 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/95 p-1 shadow-md dark:bg-zinc-900/90">
-  {c.logo ? (
-    <img
-      src={c.logo}
-      alt={c.name}
-    className="h-6 w-6 object-contain"    />
-  ) : (
-    <span className="text-xl">{c.logoEmoji}</span>
-  )}
-</div>
-
-  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 pt-10">
-    <p className="line-clamp-2 text-sm font-bold leading-tight text-white">{c.name}</p>
-    <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-white/85">{c.tagline}</p>
-  </div>
-</button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {tab === 'donations' && leiriaDetailOpen && !detail && (
-        <LeiriaCampaignDetail
-          userToCampaignEur={userLeiriaCampaignEur}
-          globalUserTotalEur={userDonationEur}
-          formatCurrency={formatCurrency}
-          onBack={() => setLeiriaDetailOpen(false)}
-          onDonate={openDonate}
-          onSelectCharity={(c) => {
-            setLeiriaDetailOpen(false);
-            setDetail(c);
-          }}
-        />
-      )}
-
-      {tab === 'donations' && detail && (
-        <CharityDetail
-          charity={detail}
-          userToThisCharityEur={charityUserTotal}
-          formatCurrency={formatCurrency}
-          onBack={() => setDetail(null)}
-          onDonate={openDonate}
-          onSelectCharity={(c) => setDetail(c)}
-          globalUserTotalEur={userDonationEur}
-        />
-      )}
-
-      {tab === 'discounts' && (
-        <section className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Ofertas fixas — resgata com pontos; o desconto já está definido pela marca.
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            {DISCOUNT_OFFERS.map((offer) => (
-              <DiscountCard
-                key={offer.id}
-                offer={offer}
-                totalPoints={totalPoints}
-                onRedeem={() => redeemDiscount(offer)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {tab === 'contribution' && (
-        <ContributionPanel
-          userTotalEur={userDonationEur}
-          formatCurrency={formatCurrency}
-          onRefresh={() => refreshUserTotal()}
-        />
-      )}
-
-      <Sheet open={donateOpen} onOpenChange={setDonateOpen}>
-        <SheetContent
-          side="bottom"
-          className="max-h-[88vh] overflow-y-auto rounded-t-2xl border-t bg-background px-4 pb-8 pt-3 sm:mx-auto sm:max-w-md"
-        >
-          <SheetHeader className="space-y-1 text-left">
-            <SheetTitle className="text-lg">Doar com pontos</SheetTitle>
-            <p className="text-sm text-muted-foreground">
-              {detail?.name ?? (leiriaDetailOpen ? 'Ajuda Leiria' : 'Instituição')} · equivalência{' '}
-              {POINTS_PER_EURO} pts = 1 €
-            </p>
-          </SheetHeader>
-
-          <div className="mt-4 grid grid-cols-2 gap-2.5">
-            {DONATION_EURO_AMOUNTS.map((eur) => {
-              const pts = eurosToPoints(eur);
-              const selected = selectedEur === eur;
-              return (
+            <div className="grid grid-cols-2 gap-3">
+              {CHARITIES.map((c) => (
                 <button
-                  key={eur}
+                  key={c.id}
                   type="button"
-                  onClick={() => setSelectedEur(eur)}
-                  className={cn(
-                    'flex flex-col items-center justify-center rounded-2xl border-2 py-3 transition',
-                    selected
-                      ? 'border-violet-500 bg-violet-500/10 dark:border-violet-400'
-                      : 'border-border bg-muted/30 hover:bg-muted/50',
-                  )}
+                  onClick={() => {
+                    setLeiriaDetailOpen(false);
+                    setDetail(c);
+                  }}
+                  className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-border/60 text-left shadow-sm transition hover:opacity-[0.98] active:scale-[0.99]"
                 >
-                  <span className="text-lg font-bold tabular-nums">{eur} €</span>
-                  <span className="mt-1 flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                    <img src={impactPointsLogo} alt="" className="h-3.5 w-3.5 opacity-80" />
-                    {pts.toLocaleString()} pts
-                  </span>
+                  {c.image ? (
+                    <>
+                      <img
+                        src={c.image}
+                        alt={c.name}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/25" />
+                    </>
+                  ) : (
+                    <div className={cn('absolute inset-0 bg-gradient-to-br', c.gradient)} />
+                  )}
+
+                  <div className="absolute left-3 top-3 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/95 p-1 shadow-md dark:bg-zinc-900/90">
+                    {c.logo ? (
+                      <img src={c.logo} alt={c.name} className="h-6 w-6 object-contain" />
+                    ) : (
+                      <span className="text-xl">{c.logoEmoji}</span>
+                    )}
+                  </div>
+
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 pt-10">
+                    <p className="line-clamp-2 text-sm font-bold leading-tight text-white">{c.name}</p>
+                    <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-white/85">
+                      {c.tagline}
+                    </p>
+                  </div>
                 </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-muted/30 px-3 py-2.5">
-            <div className="flex items-center gap-2">
-              <Repeat className="h-4 w-4 text-emerald-600" />
-              <div>
-                <p className="text-sm font-medium">Doação recorrente</p>
-                <p className="text-xs text-muted-foreground">Renova todos os meses em pontos</p>
-              </div>
+              ))}
             </div>
-            <Switch checked={recurring} onCheckedChange={setRecurring} />
-          </div>
+          </section>
+        )}
 
-          <div className="mt-4 flex gap-2 rounded-xl border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
-            <Info className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>
-              Estimativa: a instituição recebe cerca de{' '}
-              <strong className="text-foreground">{formatCurrency(netToCharity(selectedEur))}</strong> após
-              taxas (valor indicativo).
-            </span>
-          </div>
+        {tab === 'donations' && leiriaDetailOpen && !detail && (
+          <LeiriaCampaignDetail
+            userToCampaignEur={userLeiriaCampaignEur}
+            globalUserTotalEur={userDonationEur}
+            formatCurrency={formatCurrency}
+            onBack={() => setLeiriaDetailOpen(false)}
+            onDonate={openDonate}
+            onDonateInGroup={openDonateInGroup}
+            onSelectCharity={(c) => {
+              setLeiriaDetailOpen(false);
+              setDetail(c);
+            }}
+            isGroupAdmin={isGroupAdmin}
+            adminGroups={adminGroups}
+          />
+        )}
 
-          <Button
-            type="button"
-            className="mt-5 h-12 w-full rounded-2xl bg-foreground text-background hover:bg-foreground/90"
-            onClick={confirmDonation}
-            disabled={
-              (!detail && !leiriaDetailOpen) || totalPoints < eurosToPoints(selectedEur)
-            }
+        {tab === 'donations' && detail && (
+          <CharityDetail
+            charity={detail}
+            userToThisCharityEur={charityUserTotal}
+            formatCurrency={formatCurrency}
+            onBack={() => setDetail(null)}
+            onDonate={openDonate}
+            onDonateInGroup={openDonateInGroup}
+            onSelectCharity={(c) => setDetail(c)}
+            globalUserTotalEur={userDonationEur}
+            isGroupAdmin={isGroupAdmin}
+            adminGroups={adminGroups}
+          />
+        )}
+
+        {tab === 'discounts' && (
+          <section className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Ofertas fixas — resgata com pontos; o desconto já está definido pela marca.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {DISCOUNT_OFFERS.map((offer) => (
+                <DiscountCard
+                  key={offer.id}
+                  offer={offer}
+                  totalPoints={totalPoints}
+                  onRedeem={() => redeemDiscount(offer)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {tab === 'contribution' && (
+          <ContributionPanel
+            userTotalEur={userDonationEur}
+            formatCurrency={formatCurrency}
+            onRefresh={refreshUserTotal}
+          />
+        )}
+
+        <Sheet open={donateOpen} onOpenChange={setDonateOpen}>
+          <SheetContent
+            side="bottom"
+            className="max-h-[88vh] overflow-y-auto rounded-t-2xl border-t bg-background px-4 pb-8 pt-3 sm:mx-auto sm:max-w-md"
           >
-            Confirmar doação · {eurosToPoints(selectedEur).toLocaleString()} pts
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className="mt-2 w-full text-sm"
-            onClick={() => toast.info('Brevemente: ganhar mais pontos no orçamento.')}
+            <SheetHeader className="space-y-1 text-left">
+              <SheetTitle className="text-lg">Doar com pontos</SheetTitle>
+              <p className="text-sm text-muted-foreground">
+                {detail?.name ?? (leiriaDetailOpen ? 'Ajuda Leiria' : 'Instituição')} · equivalência{' '}
+                {POINTS_PER_EURO} pts = 1 €
+              </p>
+            </SheetHeader>
+
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
+              {DONATION_EURO_AMOUNTS.map((eur) => {
+                const pts = eurosToPoints(eur);
+                const selected = selectedEur === eur;
+
+                return (
+                  <button
+                    key={eur}
+                    type="button"
+                    onClick={() => setSelectedEur(eur)}
+                    className={cn(
+                      'flex flex-col items-center justify-center rounded-2xl border-2 py-3 transition',
+                      selected
+                        ? 'border-violet-500 bg-violet-500/10 dark:border-violet-400'
+                        : 'border-border bg-muted/30 hover:bg-muted/50',
+                    )}
+                  >
+                    <span className="text-lg font-bold tabular-nums">{eur} €</span>
+                    <span className="mt-1 flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                      <img src={impactPointsLogo} alt="" className="h-3.5 w-3.5 opacity-80" />
+                      {pts.toLocaleString()} pts
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-muted/30 px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <Repeat className="h-4 w-4 text-emerald-600" />
+                <div>
+                  <p className="text-sm font-medium">Doação recorrente</p>
+                  <p className="text-xs text-muted-foreground">Renova todos os meses em pontos</p>
+                </div>
+              </div>
+              <Switch checked={recurring} onCheckedChange={setRecurring} />
+            </div>
+
+            <div className="mt-4 flex gap-2 rounded-xl border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+              <Info className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                Estimativa: a instituição recebe cerca de{' '}
+                <strong className="text-foreground">
+                  {formatCurrency(netToCharity(selectedEur))}
+                </strong>{' '}
+                após taxas (valor indicativo).
+              </span>
+            </div>
+
+            <Button
+              type="button"
+              className="mt-5 h-12 w-full rounded-2xl bg-foreground text-background hover:bg-foreground/90"
+              onClick={confirmDonation}
+              disabled={!donationRecipient || totalPoints < eurosToPoints(selectedEur)}
+            >
+              Confirmar doação · {eurosToPoints(selectedEur).toLocaleString()} pts
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              className="mt-2 w-full text-sm"
+              onClick={() => toast.info('Brevemente: ganhar mais pontos no orçamento.')}
+            >
+              Obter mais pontos
+            </Button>
+          </SheetContent>
+        </Sheet>
+
+        <Sheet open={groupDonateOpen} onOpenChange={setGroupDonateOpen}>
+          <SheetContent
+            side="bottom"
+            className="max-h-[88vh] overflow-y-auto rounded-t-2xl border-t bg-background px-4 pb-8 pt-3 sm:mx-auto sm:max-w-md"
           >
-            Obter mais pontos
-          </Button>
-        </SheetContent>
-      </Sheet>
+            <SheetHeader className="space-y-1 text-left">
+              <SheetTitle className="text-lg">Doar em grupo</SheetTitle>
+              <p className="text-sm text-muted-foreground">
+                Cria uma votação no chat do grupo para{' '}
+                {detail?.name ?? (leiriaDetailOpen ? 'Ajuda Leiria' : 'a instituição selecionada')}
+              </p>
+            </SheetHeader>
+
+            <div className="mt-4 space-y-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Seleciona o grupo</label>
+
+                {adminGroups.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+                    Não tens grupos onde sejas admin.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {adminGroups.map((group) => {
+                      const isSelected = selectedGroupId === group.id;
+
+                      return (
+                        <button
+                          key={group.id}
+                          type="button"
+                          onClick={() => setSelectedGroupId(group.id)}
+                          className={cn(
+                            'flex w-full items-center justify-between rounded-xl border p-3 text-left transition',
+                            isSelected
+                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
+                              : 'border-border bg-muted/20 hover:bg-muted/40',
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                              <Users className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{group.name}</p>
+                              <p className="text-xs text-muted-foreground">Admin group</p>
+                            </div>
+                          </div>
+
+                          {isSelected && <span className="text-xs font-semibold text-emerald-600">Selecionado</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+                Vai ser criada uma votação no chat do grupo para aprovar a doação de{' '}
+                <strong className="text-foreground">{selectedEur} €</strong>{' '}
+                ({eurosToPoints(selectedEur).toLocaleString()} pts)
+                {selectedGroup ? (
+                  <>
+                    {' '}para o grupo <strong className="text-foreground">{selectedGroup.name}</strong>.
+                  </>
+                ) : (
+                  '.'
+                )}
+              </div>
+
+              <Button
+                type="button"
+                className="h-12 w-full rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700"
+                onClick={confirmGroupDonationVote}
+                disabled={!donationRecipient || adminGroups.length === 0 || !selectedGroupId}
+              >
+                Criar votação no grupo
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );
@@ -514,14 +674,20 @@ function LeiriaCampaignDetail({
   formatCurrency,
   onBack,
   onDonate,
+  onDonateInGroup,
   onSelectCharity,
+  isGroupAdmin,
+  adminGroups,
 }: {
   userToCampaignEur: number;
   globalUserTotalEur: number;
   formatCurrency: (n: number) => string;
   onBack: () => void;
   onDonate: () => void;
+  onDonateInGroup: () => void;
   onSelectCharity: (c: Charity) => void;
+  isGroupAdmin: boolean;
+  adminGroups: StoreGroupOption[];
 }) {
   const raised = getLeiriaCampaignRaisedPoints();
   const goal = LEIRIA_CAMPAIGN_GOAL_POINTS;
@@ -541,6 +707,7 @@ function LeiriaCampaignDetail({
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
+
         <button
           type="button"
           className="ml-auto flex h-9 w-9 items-center justify-center rounded-full bg-muted"
@@ -580,17 +747,32 @@ function LeiriaCampaignDetail({
           <Progress value={pct} className="h-2.5 bg-white/20" indicatorClassName="bg-white shadow-sm" />
         </div>
 
-        <p className="relative mt-4 text-3xl font-bold tabular-nums">{formatCurrency(userToCampaignEur)}</p>
+        <p className="relative mt-4 text-3xl font-bold tabular-nums">
+          {formatCurrency(userToCampaignEur)}
+        </p>
         <p className="relative mt-1 text-xs text-white/80">Contribuído por ti para esta campanha</p>
 
-        <Button
-          type="button"
-          onClick={onDonate}
-          className="relative mt-5 h-11 rounded-full bg-white/20 px-6 text-white backdrop-blur hover:bg-white/30"
-        >
-          <Heart className="mr-2 h-4 w-4 fill-white/30" />
-          Doar
-        </Button>
+        <div className="relative mt-5 flex gap-2">
+          <Button
+            type="button"
+            onClick={onDonate}
+            className="h-11 rounded-full bg-white/20 px-6 text-white backdrop-blur hover:bg-white/30"
+          >
+            <Heart className="mr-2 h-4 w-4 fill-white/30" />
+            Doar
+          </Button>
+
+          {isGroupAdmin && adminGroups.length > 0 && (
+            <Button
+              type="button"
+              onClick={onDonateInGroup}
+              className="h-11 rounded-full bg-white px-6 text-teal-900 hover:bg-white/90"
+            >
+              <Users className="mr-2 h-4 w-4" />
+              Doar em grupo
+            </Button>
+          )}
+        </div>
       </div>
 
       <div>
@@ -608,6 +790,14 @@ function LeiriaCampaignDetail({
             subtitle="No ecrã de doação, ativa a renovação mensal em pontos"
             onClick={onDonate}
           />
+          {isGroupAdmin && adminGroups.length > 0 && (
+            <RowAction
+              icon={<Users className="h-5 w-5 text-emerald-600" />}
+              title="Doar em grupo"
+              subtitle="Cria uma votação no chat do grupo"
+              onClick={onDonateInGroup}
+            />
+          )}
         </div>
       </div>
 
@@ -657,7 +847,9 @@ function LeiriaCampaignDetail({
         </div>
       </div>
 
-      <p className="text-center text-[10px] text-muted-foreground">Valores demonstrativos · Impact Wallet</p>
+      <p className="text-center text-[10px] text-muted-foreground">
+        Valores demonstrativos · Impact Wallet
+      </p>
     </div>
   );
 }
@@ -669,7 +861,10 @@ function CharityDetail({
   formatCurrency,
   onBack,
   onDonate,
+  onDonateInGroup,
   onSelectCharity,
+  isGroupAdmin,
+  adminGroups,
 }: {
   charity: Charity;
   userToThisCharityEur: number;
@@ -677,7 +872,10 @@ function CharityDetail({
   formatCurrency: (n: number) => string;
   onBack: () => void;
   onDonate: () => void;
+  onDonateInGroup: () => void;
   onSelectCharity: (c: Charity) => void;
+  isGroupAdmin: boolean;
+  adminGroups: StoreGroupOption[];
 }) {
   const others = CHARITIES.filter((c) => c.id !== charity.id).slice(0, 6);
   const networkTotalDemo = 216_116.35;
@@ -693,47 +891,66 @@ function CharityDetail({
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <button type="button" className="ml-auto flex h-9 w-9 items-center justify-center rounded-full bg-muted" aria-label="Partilhar">
+
+        <button
+          type="button"
+          className="ml-auto flex h-9 w-9 items-center justify-center rounded-full bg-muted"
+          aria-label="Partilhar"
+        >
           <Share2 className="h-4 w-4" />
         </button>
       </div>
 
       <div className="relative overflow-hidden rounded-2xl border border-white/10 shadow-lg">
-  {charity.image ? (
-    <img
-      src={charity.image}
-      alt={charity.name}
-      className="absolute inset-0 h-full w-full object-cover"
-    />
-  ) : (
-    <div className={cn('absolute inset-0 bg-gradient-to-br', charity.gradient)} />
-  )}
+        {charity.image ? (
+          <img
+            src={charity.image}
+            alt={charity.name}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className={cn('absolute inset-0 bg-gradient-to-br', charity.gradient)} />
+        )}
 
-  <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/50" />
 
-  <div className="relative p-6 text-white">
-    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-2xl shadow-md dark:bg-zinc-900/90">
-      {charity.logo ? (
-        <img src={charity.logo} alt={charity.name} className="h-8 w-8 object-contain" />
-      ) : (
-        charity.logoEmoji
-      )}
-    </div>
+        <div className="relative p-6 text-white">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-2xl shadow-md dark:bg-zinc-900/90">
+            {charity.logo ? (
+              <img src={charity.logo} alt={charity.name} className="h-8 w-8 object-contain" />
+            ) : (
+              charity.logoEmoji
+            )}
+          </div>
 
-    <h2 className="mt-4 text-2xl font-bold leading-tight">{charity.name}</h2>
-    <p className="mt-2 text-3xl font-bold tabular-nums">{formatCurrency(userToThisCharityEur)}</p>
-    <p className="mt-1 text-xs text-white/80">Contribuído por ti para esta instituição</p>
+          <h2 className="mt-4 text-2xl font-bold leading-tight">{charity.name}</h2>
+          <p className="mt-2 text-3xl font-bold tabular-nums">{formatCurrency(userToThisCharityEur)}</p>
+          <p className="mt-1 text-xs text-white/80">Contribuído por ti para esta instituição</p>
 
-    <Button
-      type="button"
-      onClick={onDonate}
-      className="mt-5 h-11 rounded-full bg-white/20 px-6 text-white backdrop-blur hover:bg-white/30"
-    >
-      <Heart className="mr-2 h-4 w-4 fill-white/30" />
-      Doar
-    </Button>
-  </div>
-</div>
+          <div className="mt-5 flex gap-2">
+            <Button
+              type="button"
+              onClick={onDonate}
+              className="h-11 rounded-full bg-white/20 px-6 text-white backdrop-blur hover:bg-white/30"
+            >
+              <Heart className="mr-2 h-4 w-4 fill-white/30" />
+              Doar
+            </Button>
+
+            {isGroupAdmin && adminGroups.length > 0 && (
+              <Button
+                type="button"
+                onClick={onDonateInGroup}
+                className="h-11 rounded-full bg-white px-6 text-teal-900 hover:bg-white/90"
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Doar em grupo
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div>
         <h3 className="text-sm font-semibold">Mais formas de doar</h3>
         <div className="mt-2 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
@@ -749,6 +966,14 @@ function CharityDetail({
             subtitle="Define um valor mensal em pontos"
             onClick={onDonate}
           />
+          {isGroupAdmin && adminGroups.length > 0 && (
+            <RowAction
+              icon={<Users className="h-5 w-5 text-emerald-600" />}
+              title="Doar em grupo"
+              subtitle="Cria uma votação no chat do grupo"
+              onClick={onDonateInGroup}
+            />
+          )}
         </div>
       </div>
 
@@ -768,7 +993,8 @@ function CharityDetail({
           <span className="text-lg font-bold tabular-nums">{formatCurrency(networkTotalDemo)}</span>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          O teu total global em doações: <strong className="text-foreground">{formatCurrency(globalUserTotalEur)}</strong>
+          O teu total global em doações:{' '}
+          <strong className="text-foreground">{formatCurrency(globalUserTotalEur)}</strong>
         </p>
       </div>
 
@@ -793,7 +1019,9 @@ function CharityDetail({
         </div>
       </div>
 
-      <p className="text-center text-[10px] text-muted-foreground">Valores demonstrativos · Impact Wallet</p>
+      <p className="text-center text-[10px] text-muted-foreground">
+        Valores demonstrativos · Impact Wallet
+      </p>
     </div>
   );
 }
@@ -815,7 +1043,9 @@ function RowAction({
       onClick={onClick}
       className="flex w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-muted/50"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">{icon}</span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+        {icon}
+      </span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{title}</p>
         <p className="text-xs text-muted-foreground">{subtitle}</p>
@@ -835,13 +1065,17 @@ function DiscountCard({
   onRedeem: () => void;
 }) {
   const ok = totalPoints >= offer.costPoints;
+
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="bg-gradient-to-br from-indigo-500/20 to-violet-500/10 px-3 py-3">
-        <span className="inline-block rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-medium">{offer.badge}</span>
+        <span className="inline-block rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-medium">
+          {offer.badge}
+        </span>
         <p className="mt-2 text-sm font-bold leading-tight">{offer.brand}</p>
         <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">{offer.title}</p>
       </div>
+
       <div className="flex flex-1 flex-col gap-2 p-3">
         <p className="flex-1 text-xs text-muted-foreground">{offer.description}</p>
         <div className="flex items-center gap-1 text-xs font-semibold text-amber-600">
@@ -881,7 +1115,11 @@ function ContributionPanel({
               {MOCK_GLOBAL_CONTRIBUTORS.toLocaleString()} pessoas contribuíram
             </p>
           </div>
-          <button type="button" className="text-xs font-medium text-sky-600 dark:text-sky-400" onClick={() => onRefresh()}>
+          <button
+            type="button"
+            className="text-xs font-medium text-sky-600 dark:text-sky-400"
+            onClick={onRefresh}
+          >
             Atualizar
           </button>
         </div>
