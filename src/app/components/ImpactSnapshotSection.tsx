@@ -8,23 +8,35 @@ import { cn } from './ui/utils';
 
 const CARD_PX = 172;
 
-function coffeeTitle(snapshot: ImpactSnapshot, formatCurrency: (n: number) => string) {
+function coffeeTitle(
+  snapshot: ImpactSnapshot,
+  formatCurrency: (n: number) => string,
+  t: ReturnType<typeof useSettings>['t']
+) {
   if (!snapshot.hasCoffeeData) {
-    return `Poupaste ${formatCurrency(34)} em cafés este mês`;
+    return `${t.saved} ${formatCurrency(34)} ${t.inCoffeeThisMonth}`;
   }
+
   const { coffeeThisMonth, coffeeAvg3m } = snapshot;
   const saved = Math.max(0, coffeeAvg3m - coffeeThisMonth);
+
   if (coffeeAvg3m > 0 && saved > 0) {
-    return `Poupaste ${formatCurrency(saved)} em cafés este mês`;
+    return `${t.saved} ${formatCurrency(saved)} ${t.inCoffeeThisMonth}`;
   }
-  return `Este mês: ${formatCurrency(coffeeThisMonth)} em cafés`;
+
+  return `${t.thisMonthLabel}: ${formatCurrency(coffeeThisMonth)} ${t.inCoffee}`;
 }
 
-function coffeeSubtitle(snapshot: ImpactSnapshot, formatCurrency: (n: number) => string) {
+function coffeeSubtitle(
+  snapshot: ImpactSnapshot,
+  formatCurrency: (n: number) => string,
+  t: ReturnType<typeof useSettings>['t']
+) {
   if (!snapshot.hasCoffeeData) {
-    return 'vs média dos últimos 3 meses';
+    return t.vsAverageLast3Months;
   }
-  return `vs média dos últimos 3 meses (${formatCurrency(snapshot.coffeeAvg3m)})`;
+
+  return `${t.vsAverageLast3Months} (${formatCurrency(snapshot.coffeeAvg3m)})`;
 }
 
 interface ImpactSnapshotSectionProps {
@@ -32,7 +44,7 @@ interface ImpactSnapshotSectionProps {
 }
 
 export function ImpactSnapshotSection({ expenses }: ImpactSnapshotSectionProps) {
-  const { formatCurrency } = useSettings();
+  const { formatCurrency, t } = useSettings();
   const snapshot = useMemo(() => buildImpactSnapshot(expenses), [expenses]);
   const [open, setOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -49,25 +61,25 @@ export function ImpactSnapshotSection({ expenses }: ImpactSnapshotSectionProps) 
         key: 'donations',
         icon: Heart,
         accent: 'from-rose-500/15 to-amber-500/10',
-        title: `${formatCurrency(snapshot.donationsTotal)} doados a causas que escolheste`,
+        title: `${formatCurrency(snapshot.donationsTotal)} ${t.donatedToCausesYouChose}`,
         subtitle: orgLine,
       },
       {
         key: 'savings',
         icon: PiggyBank,
         accent: 'from-emerald-500/15 to-teal-500/10',
-        title: `${formatCurrency(snapshot.savingsVsNoBudget)} poupados em gastos desnecessários`,
-        subtitle: 'vs meses sem orçamento definido',
+        title: `${formatCurrency(snapshot.savingsVsNoBudget)} ${t.savedOnUnnecessaryExpenses}`,
+        subtitle: t.vsMonthsWithoutBudget,
       },
       {
         key: 'coffee',
         icon: Coffee,
         accent: 'from-amber-500/15 to-orange-500/10',
-        title: coffeeTitle(snapshot, formatCurrency),
-        subtitle: coffeeSubtitle(snapshot, formatCurrency),
+        title: coffeeTitle(snapshot, formatCurrency, t),
+        subtitle: coffeeSubtitle(snapshot, formatCurrency, t),
       },
     ];
-  }, [snapshot, formatCurrency, orgLine]);
+  }, [snapshot, formatCurrency, orgLine, t]);
 
   const onScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -81,8 +93,8 @@ export function ImpactSnapshotSection({ expenses }: ImpactSnapshotSectionProps) 
       <div className="space-y-2">
         <div className="flex items-end justify-between gap-2 px-0.5">
           <div>
-            <h2 className="text-sm font-semibold tracking-tight text-foreground">Impacto</h2>
-            <p className="text-xs text-muted-foreground">Desliza para cima para ver mais</p>
+            <h2 className="text-sm font-semibold tracking-tight text-foreground">{t.impact}</h2>
+            <p className="text-xs text-muted-foreground">{t.swipeUpToSeeMore}</p>
           </div>
           <Leaf className="h-4 w-4 shrink-0 text-emerald-600 opacity-80" aria-hidden />
         </div>
@@ -95,6 +107,7 @@ export function ImpactSnapshotSection({ expenses }: ImpactSnapshotSectionProps) 
         >
           {cards.map((card) => {
             const Icon = card.icon;
+
             return (
               <button
                 key={card.key}
@@ -114,8 +127,9 @@ export function ImpactSnapshotSection({ expenses }: ImpactSnapshotSectionProps) 
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{card.subtitle}</p>
                   </div>
                 </div>
+
                 <p className="w-full text-center text-[11px] font-medium text-emerald-700/90 dark:text-emerald-400/90">
-                  Ver estatísticas completas
+                  {t.viewFullStats}
                 </p>
               </button>
             );
@@ -141,14 +155,14 @@ export function ImpactSnapshotSection({ expenses }: ImpactSnapshotSectionProps) 
           className="max-h-[92vh] overflow-y-auto rounded-t-2xl px-4 pb-8 pt-2 sm:mx-auto sm:max-w-md"
         >
           <SheetHeader className="pb-2 text-left">
-            <SheetTitle className="text-lg">O teu impacto</SheetTitle>
-            <SheetDescription>Resumo de doações, poupança e hábitos — dados demonstrativos onde aplicável.</SheetDescription>
+            <SheetTitle className="text-lg">{t.yourImpact}</SheetTitle>
+            <SheetDescription>{t.impactSummaryDescription}</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 pb-2">
             <section className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 dark:border-emerald-900 dark:bg-emerald-950/30">
               <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">
-                Doações
+                {t.donations}
               </p>
               <p className="mt-1 text-lg font-bold tabular-nums text-emerald-900 dark:text-emerald-100">
                 {formatCurrency(snapshot.donationsTotal)}
@@ -157,19 +171,25 @@ export function ImpactSnapshotSection({ expenses }: ImpactSnapshotSectionProps) 
             </section>
 
             <section className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/40">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Poupança estimada</p>
-              <p className="mt-1 text-lg font-bold tabular-nums">{formatCurrency(snapshot.savingsVsNoBudget)}</p>
-              <p className="mt-1 text-sm text-muted-foreground">vs meses sem orçamento definido</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t.estimatedSavings}
+              </p>
+              <p className="mt-1 text-lg font-bold tabular-nums">
+                {formatCurrency(snapshot.savingsVsNoBudget)}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{t.vsMonthsWithoutBudget}</p>
             </section>
 
             <section className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 dark:border-amber-900/50 dark:bg-amber-950/20">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-900 dark:text-amber-200">Cafés</p>
-              <p className="mt-1 text-sm text-foreground">{coffeeTitle(snapshot, formatCurrency)}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{coffeeSubtitle(snapshot, formatCurrency)}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-900 dark:text-amber-200">
+                {t.coffees}
+              </p>
+              <p className="mt-1 text-sm text-foreground">{coffeeTitle(snapshot, formatCurrency, t)}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{coffeeSubtitle(snapshot, formatCurrency, t)}</p>
             </section>
 
             <section>
-              <h3 className="text-sm font-semibold text-foreground">Instituições apoiadas</h3>
+              <h3 className="text-sm font-semibold text-foreground">{t.supportedOrganizations}</h3>
               <ul className="mt-3 space-y-3">
                 {snapshot.institutions.map((org) => (
                   <li
@@ -183,7 +203,7 @@ export function ImpactSnapshotSection({ expenses }: ImpactSnapshotSectionProps) 
                       <div className="min-w-0">
                         <p className="font-medium leading-tight">{org.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {org.donationCount} doações · {formatCurrency(org.totalAmount)} total
+                          {org.donationCount} {t.donationsCount} · {formatCurrency(org.totalAmount)} {t.total}
                         </p>
                       </div>
                     </div>
