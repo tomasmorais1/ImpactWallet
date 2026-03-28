@@ -349,46 +349,6 @@ function AppContent() {
           <Achievements totalPoints={totalPoints} totalSaved={savedAmount} friendCount={friendCount} />
         )}
 
-        {activeTab === 'home' && (
-          <ScreenGradientLayout>
-            <div className="space-y-4">
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('profile')}
-                  className="absolute left-4 top-[max(0.85rem,calc(env(safe-area-inset-top)+0.35rem))] z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/45 bg-white/20 text-white shadow-md backdrop-blur-md transition hover:bg-white/30"
-                  aria-label="Profile"
-                >
-                  <User className="h-5 w-5" strokeWidth={2} />
-                </button>
-
-                <PointsDisplay
-                  totalPoints={totalPoints}
-                  onAddPoints={() => setActiveTab('profile')}
-                  onMove={() => setActiveTab('social')}
-                  onData={() => setActiveTab('finance')}
-                  onPremium={() => setActiveTab('premium')}
-                />
-              </div>
-
-              <div className="space-y-4 px-4 pb-6">
-                <HomeBudgetPanel
-                  expenses={expenses}
-                  monthlyGoal={monthlyGoal}
-                  totalSpent={totalSpent}
-                  remainingBudget={remainingBudget}
-                  percentageUsed={percentageUsed}
-                />
-                <ImpactSnapshotSection expenses={expenses} />
-                <RecentTransactions
-                  expenses={thisMonthExpenses}
-                  onSeeAll={() => setActiveTab('finance')}
-                />
-              </div>
-            </div>
-          </ScreenGradientLayout>
-        )}
-
         {activeTab === 'premium' && (
           <div className="space-y-4 px-4 pt-4">
             <Card className="border-0 bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
