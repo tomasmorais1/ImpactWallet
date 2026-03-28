@@ -1,4 +1,4 @@
-import { Plus, ArrowLeftRight, Landmark, Crown } from 'lucide-react';
+import { Plus, ArrowLeftRight, Landmark, Trophy } from 'lucide-react';
 import impactPointsLogo from '../assets/impact-points-logo.png';
 
 interface PointsDisplayProps {
@@ -6,7 +6,7 @@ interface PointsDisplayProps {
   onAddPoints: () => void;
   onMove: () => void;
   onData: () => void;
-  onPremium: () => void;
+  onAchievements: () => void;
 }
 
 export function PointsDisplay({
@@ -14,13 +14,13 @@ export function PointsDisplay({
   onAddPoints,
   onMove,
   onData,
-  onPremium,
+  onAchievements,
 }: PointsDisplayProps) {
   const actions = [
     { label: 'Adicionar pontos', icon: Plus, onClick: onAddPoints },
     { label: 'Mover', icon: ArrowLeftRight, onClick: onMove },
     { label: 'Dados', icon: Landmark, onClick: onData },
-    { label: 'Premium', icon: Crown, onClick: onPremium },
+    { label: 'Conquistas', icon: Trophy, onClick: onAchievements },
   ] as const;
 
   return (

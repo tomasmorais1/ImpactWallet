@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { PointsDisplay } from './components/PointsDisplay';
 import { ScreenGradientLayout } from './components/ScreenGradientLayout';
 import { HomeBudgetPanel } from './components/HomeBudgetPanel';
+import { HomeActiveChallenges } from './components/HomeActiveChallenges';
+import { Achievements } from './components/Achievements';
 import { ImpactSnapshotSection } from './components/ImpactSnapshotSection';
 import { FinanceScreen } from './components/FinanceScreen';
 import { RecentTransactions } from './components/RecentTransactions';
@@ -303,44 +305,48 @@ function AppContent() {
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background">
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]">
-        {activeTab === 'home' && (
-          <ScreenGradientLayout>
-            <div className="space-y-4">
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('profile')}
-                  className="absolute left-4 top-[max(0.85rem,calc(env(safe-area-inset-top)+0.35rem))] z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/45 bg-white/20 text-white shadow-md backdrop-blur-md transition hover:bg-white/30"
-                  aria-label="Profile"
-                >
-                  <User className="h-5 w-5" strokeWidth={2} />
-                </button>
+        {/* HOME */}
+{activeTab === 'home' && (
+  <ScreenGradientLayout>
+    <div className="space-y-4">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setActiveTab('profile')}
+          className="absolute left-4 top-[max(0.85rem,calc(env(safe-area-inset-top)+0.35rem))] z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/45 bg-white/20 text-white shadow-md backdrop-blur-md transition hover:bg-white/30"
+          aria-label="Profile"
+        >
+          <User className="h-5 w-5" strokeWidth={2} />
+        </button>
+        <PointsDisplay
+          totalPoints={totalPoints}
+          onAddPoints={() => setActiveTab('profile')}
+          onMove={() => setActiveTab('social')}
+          onData={() => setActiveTab('finance')}
+          onAchievements={() => setActiveTab('achievements')}
+        />
+      </div>
+      <div className="space-y-4 px-4 pb-6">
+        <HomeBudgetPanel
+          expenses={expenses}
+          monthlyGoal={monthlyGoal}
+          totalSpent={totalSpent}
+          remainingBudget={remainingBudget}
+          percentageUsed={percentageUsed}
+        />
+        <HomeActiveChallenges />
+        <ImpactSnapshotSection expenses={expenses} />
+        <RecentTransactions
+          expenses={thisMonthExpenses}
+          onSeeAll={() => setActiveTab('finance')}
+        />
+      </div>
+    </div>
+  </ScreenGradientLayout>
+)}
 
-                <PointsDisplay
-                  totalPoints={totalPoints}
-                  onAddPoints={() => setActiveTab('profile')}
-                  onMove={() => setActiveTab('social')}
-                  onData={() => setActiveTab('finance')}
-                  onPremium={() => setActiveTab('premium')}
-                />
-              </div>
-
-              <div className="space-y-4 px-4 pb-6">
-                <HomeBudgetPanel
-                  expenses={expenses}
-                  monthlyGoal={monthlyGoal}
-                  totalSpent={totalSpent}
-                  remainingBudget={remainingBudget}
-                  percentageUsed={percentageUsed}
-                />
-                <ImpactSnapshotSection expenses={expenses} />
-                <RecentTransactions
-                  expenses={thisMonthExpenses}
-                  onSeeAll={() => setActiveTab('finance')}
-                />
-              </div>
-            </div>
-          </ScreenGradientLayout>
+        {activeTab === 'achievements' && (
+          <Achievements totalPoints={totalPoints} totalSaved={savedAmount} friendCount={friendCount} />
         )}
 
         {activeTab === 'premium' && (
@@ -424,6 +430,7 @@ function AppContent() {
 
         {activeTab === 'finance' && (
           <FinanceScreen
+            expenses={expenses}
             thisMonthExpenses={thisMonthExpenses}
             monthlyGoal={monthlyGoal}
             totalSpent={totalSpent}
