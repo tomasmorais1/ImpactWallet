@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Avatar, AvatarFallback } from './ui/avatar';
+import { Achievements } from './Achievements';
 import { ScreenGradientLayout } from './ScreenGradientLayout';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 import {
@@ -11,6 +12,7 @@ import {
   Send,
   Gift,
   Share2,
+  Trophy,
   TrendingUp,
   ArrowRightLeft,
   Check,
@@ -73,12 +75,16 @@ interface DonationGroup {
 
 interface FriendsProps {
   totalPoints: number;
+  totalSaved: number;
+  friendCount: number;
   onSendPoints: (friendId: string, amount: number) => void;
   onRequestPoints: (friendId: string, amount: number) => void;
 }
 
 export function Friends({
   totalPoints,
+  totalSaved,
+  friendCount,
   onSendPoints,
   onRequestPoints,
 }: FriendsProps) {
@@ -94,6 +100,7 @@ export function Friends({
   const [showTradeDialog, setShowTradeDialog] = useState(false);
   const [tradeType, setTradeType] = useState<'send' | 'request'>('send');
   const [showAddFriends, setShowAddFriends] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
@@ -426,6 +433,7 @@ export function Friends({
               type="button"
               onClick={() => {
                 setShowAddFriends((prev) => !prev);
+                setShowAchievements(false);
                 setShowCreateGroup(false);
                 setSelectedGroupId(null);
               }}
@@ -444,6 +452,7 @@ export function Friends({
               onClick={() => {
                 setShowCreateGroup((prev) => !prev);
                 setShowAddFriends(false);
+                setShowAchievements(false);
                 setSelectedGroupId(null);
               }}
               className="group flex flex-col items-center gap-2 transition active:scale-[0.98]"
@@ -453,6 +462,24 @@ export function Friends({
               </span>
               <span className="w-full max-w-[5.5rem] text-center text-xs font-semibold leading-snug text-white drop-shadow-sm">
                 Create Group
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowAchievements((prev) => !prev);
+                setShowAddFriends(false);
+                setShowCreateGroup(false);
+                setSelectedGroupId(null);
+              }}
+              className="group flex flex-col items-center gap-2 transition active:scale-[0.98]"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/[0.18] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[2px]">
+                <Trophy className="h-[18px] w-[18px] text-white" strokeWidth={2.25} />
+              </span>
+              <span className="w-full max-w-[5.5rem] text-center text-xs font-semibold leading-snug text-white drop-shadow-sm">
+                Achievements
               </span>
             </button>
           </div>
@@ -592,118 +619,130 @@ export function Friends({
             </Card>
           )}
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Groups</CardTitle>
-              <CardDescription>Open the chat in a modal</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {groups.map((group) => (
-                <div
-                  key={group.id}
-                  className="w-full rounded-xl border bg-white p-4 dark:bg-background"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-semibold">{group.name}</h4>
-                        {group.adminId === currentUser.id && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                            <Crown className="h-3 w-3" />
-                            Admin
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {group.members.length} members
-                      </p>
-                    </div>
+          {showAchievements && (
+            <Achievements
+              totalPoints={totalPoints}
+              totalSaved={totalSaved}
+              friendCount={friendCount}
+            />
+          )}
 
-                    <Button
-                      size="sm"
-                      className="shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-700"
-                      onClick={() => {
-                        setSelectedGroupId(group.id);
-                        setShowChatSheet(true);
-                      }}
+          {!showAchievements && !showAddFriends && !showCreateGroup && (
+            <>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Groups</CardTitle>
+                  <CardDescription>Open the chat in a modal</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {groups.map((group) => (
+                    <div
+                      key={group.id}
+                      className="w-full rounded-xl border bg-white p-4 dark:bg-background"
                     >
-                      <MessageCircle className="mr-1.5 h-4 w-4" />
-                      Chat
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-semibold">{group.name}</h4>
+                            {group.adminId === currentUser.id && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                                <Crown className="h-3 w-3" />
+                                Admin
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {group.members.length} members
+                          </p>
+                        </div>
 
-          <Input
-            placeholder="Search friends..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-11 rounded-xl border-0 bg-secondary/50"
-          />
-
-          <div className="space-y-3">
-            {filteredFriends.map((friend) => (
-              <Card
-                key={friend.id}
-                className="overflow-hidden border bg-white transition-all duration-300 hover:shadow-lg dark:bg-background"
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 font-semibold text-white">
-                          {friend.avatar}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      <div
-                        className={`absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white ${
-                          friend.status === 'online' ? 'bg-emerald-500' : 'bg-gray-400'
-                        }`}
-                      />
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-semibold">{friend.name}</h4>
-                        <span className="text-xs text-muted-foreground">L{friend.level}</span>
-                      </div>
-
-                      <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>{friend.points} pts</span>
-                        <span className="flex items-center gap-1">
-                          <TrendingUp className="h-3 w-3 text-emerald-500" />
-                          {friend.savingsStreak} days
-                        </span>
+                        <Button
+                          size="sm"
+                          className="shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-700"
+                          onClick={() => {
+                            setSelectedGroupId(group.id);
+                            setShowChatSheet(true);
+                          }}
+                        >
+                          <MessageCircle className="mr-1.5 h-4 w-4" />
+                          Chat
+                        </Button>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="mt-3 flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
-                      onClick={() => openTradeDialog(friend, 'send')}
-                    >
-                      <Send className="mr-1.5 h-3.5 w-3.5" />
-                      Send
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
-                      onClick={() => openTradeDialog(friend, 'request')}
-                    >
-                      <Gift className="mr-1.5 h-3.5 w-3.5" />
-                      Request
-                    </Button>
-                  </div>
+                  ))}
                 </CardContent>
               </Card>
-            ))}
-          </div>
+
+              <Input
+                placeholder="Search friends..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-11 rounded-xl border-0 bg-secondary/50"
+              />
+
+              <div className="space-y-3">
+                {filteredFriends.map((friend) => (
+                  <Card
+                    key={friend.id}
+                    className="overflow-hidden border bg-white transition-all duration-300 hover:shadow-lg dark:bg-background"
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <Avatar className="h-12 w-12">
+                            <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 font-semibold text-white">
+                              {friend.avatar}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div
+                            className={`absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white ${
+                              friend.status === 'online' ? 'bg-emerald-500' : 'bg-gray-400'
+                            }`}
+                          />
+                        </div>
+
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-semibold">{friend.name}</h4>
+                            <span className="text-xs text-muted-foreground">L{friend.level}</span>
+                          </div>
+
+                          <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                            <span>{friend.points} pts</span>
+                            <span className="flex items-center gap-1">
+                              <TrendingUp className="h-3 w-3 text-emerald-500" />
+                              {friend.savingsStreak} days
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex gap-2">
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
+                          onClick={() => openTradeDialog(friend, 'send')}
+                        >
+                          <Send className="mr-1.5 h-3.5 w-3.5" />
+                          Send
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
+                          onClick={() => openTradeDialog(friend, 'request')}
+                        >
+                          <Gift className="mr-1.5 h-3.5 w-3.5" />
+                          Request
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         <Sheet
@@ -934,11 +973,10 @@ export function Friends({
                 {(selectedGroup?.groupPoints ?? 0) + selectedGroupPoints} pts
               </strong>
             </div>
-
             <Button
               type="button"
-              className="mt-1 h-10 w-full rounded-2xl bg-foreground text-background hover:bg-foreground/90"
-              onClick={handleAddPointsToGroup}
+             className="mt-1 h-10 w-full rounded-2xl bg-foreground text-background hover:bg-foreground/90" 
+               onClick={handleAddPointsToGroup}
               disabled={selectedGroupPoints <= 0 || selectedGroupPoints > totalPoints}
             >
               Confirm add · {selectedGroupPoints} pts

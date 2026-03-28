@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { PointsDisplay } from './components/PointsDisplay';
 import { ScreenGradientLayout } from './components/ScreenGradientLayout';
 import { HomeBudgetPanel } from './components/HomeBudgetPanel';
+import { HomeActiveChallenges } from './components/HomeActiveChallenges';
+import { Achievements } from './components/Achievements';
 import { ImpactSnapshotSection } from './components/ImpactSnapshotSection';
 import { FinanceScreen } from './components/FinanceScreen';
 import { RecentTransactions } from './components/RecentTransactions';
@@ -44,7 +46,7 @@ function BudgetTracker({
   remainingBudget: number;
   percentageUsed: number;
 }) {
-  const { formatCurrency, t } = useSettings();
+  const { formatCurrency } = useSettings();
   const isOverBudget = remainingBudget < 0;
   const clampedPct = Math.min(percentageUsed, 100);
   const barColor =
@@ -54,23 +56,18 @@ function BudgetTracker({
     <Card className="mx-4 -mt-5 overflow-hidden border-0 shadow-xl">
       <CardContent className="p-4">
         <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {t.budgetTracker} · {t.thisMonth}
+          Budget Tracker · This Month
         </p>
-
         <div className="mb-4 grid grid-cols-3 gap-2">
           <div className="rounded-xl bg-secondary/50 p-3 text-center">
-            <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-              {t.goal}
-            </p>
+            <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Goal</p>
             <p className="text-base font-bold leading-tight">
               {monthlyGoal > 0 ? formatCurrency(monthlyGoal) : '—'}
             </p>
           </div>
 
           <div className="rounded-xl bg-secondary/50 p-3 text-center">
-            <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-              {t.spent}
-            </p>
+            <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Spent</p>
             <p className={`text-base font-bold leading-tight ${isOverBudget ? 'text-red-500' : ''}`}>
               {formatCurrency(totalSpent)}
             </p>
@@ -83,9 +80,7 @@ function BudgetTracker({
                 : 'bg-emerald-50 dark:bg-emerald-950/30'
             }`}
           >
-            <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-              {t.left}
-            </p>
+            <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Left</p>
             <p
               className={`text-base font-bold leading-tight ${
                 isOverBudget ? 'text-red-500' : 'text-emerald-600'
@@ -99,16 +94,13 @@ function BudgetTracker({
         {monthlyGoal > 0 && (
           <div>
             <div className="mb-1.5 flex justify-between text-[10px] text-muted-foreground">
-              <span>
-                {percentageUsed.toFixed(0)}% {t.used}
-              </span>
+              <span>{percentageUsed.toFixed(0)}% used</span>
               <span>
                 {isOverBudget
-                  ? t.overBudget
-                  : `${(100 - percentageUsed).toFixed(0)}% ${t.remaining}`}
+                  ? 'Over budget!'
+                  : `${(100 - percentageUsed).toFixed(0)}% remaining`}
               </span>
             </div>
-
             <div className="h-2.5 overflow-hidden rounded-full bg-secondary">
               <div
                 className="h-full rounded-full transition-all duration-500"
@@ -149,6 +141,8 @@ function AppContent() {
     return saved ? parseInt(saved, 10) : 0;
   });
 
+  const [friendCount] = useState(5);
+
   const [claimedImpactMonth, setClaimedImpactMonth] = useState(() => {
     return localStorage.getItem(IMPACT_POINTS_CLAIM_KEY) || '';
   });
@@ -183,11 +177,13 @@ function AppContent() {
   const totalSpent = thisMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
   const remainingBudget = monthlyGoal - totalSpent;
   const percentageUsed = monthlyGoal > 0 ? (totalSpent / monthlyGoal) * 100 : 0;
+  const savedAmount = remainingBudget > 0 ? remainingBudget : 0;
   const budgetTier = getBudgetTierInfo(percentageUsed);
   const potentialPoints = monthlyGoal > 0 ? budgetTier.points : 0;
   const monthClaimKey = `${currentYear}-${currentMonth}`;
   const claimedThisMonth = claimedImpactMonth === monthClaimKey;
-  const canClaimImpactPoints = monthlyGoal > 0 && potentialPoints > 0 && !claimedThisMonth;
+  const canClaimImpactPoints =
+    monthlyGoal > 0 && potentialPoints > 0 && !claimedThisMonth;
 
   const adminGroups: StoreGroupOption[] = useMemo(
     () => [
@@ -241,7 +237,7 @@ function AppContent() {
       ...prev,
       ...mock.map((tx) => ({
         ...tx,
-        id: `${Date.now()}-${Math.random()}`,
+        id: Date.now().toString() + Math.random(),
       })),
     ]);
   };
@@ -252,33 +248,30 @@ function AppContent() {
     setTotalPoints((prev) => prev + potentialPoints);
     localStorage.setItem(IMPACT_POINTS_CLAIM_KEY, monthClaimKey);
     setClaimedImpactMonth(monthClaimKey);
-    toast.success(`+${potentialPoints} ${t.impactPointsClaimed}`);
+    toast.success(`+${potentialPoints} impact points claimed`);
   };
 
-  const handleRedeem = (cost: number, _label: string) => {
-  setTotalPoints((prev) => Math.max(0, prev - cost));
-};
-const handleBuyPoints = (points: number, euroAmount: number) => {
-  setTotalPoints((prev) => prev + points);
-  toast.success(`${points} pontos comprados por ${euroAmount.toFixed(2)}€`);
-};
+  const handleRedeem = (cost: number) => {
+    setTotalPoints((prev) => Math.max(0, prev - cost));
+  };
+
   const handleLogin = (email: string) => {
     setUserEmail(email);
     setIsAuthenticated(true);
-    toast.success(`${t.welcomeBackSignedIn} ${email}`);
+    toast.success(`Welcome back! Signed in as ${email}`);
   };
 
   const handleSendPoints = (_friendId: string, amount: number) => {
     if (amount <= totalPoints) {
       setTotalPoints((prev) => prev - amount);
-      toast.success(`${amount} ${t.successfullySentPoints}`);
+      toast.success(`Successfully sent ${amount} points!`);
     } else {
-      toast.error(t.notEnoughPoints);
+      toast.error('Not enough points to send');
     }
   };
 
   const handleRequestPoints = (_friendId: string, _amount: number) => {
-    toast.success(t.pointRequestSent);
+    toast.success('Point request sent successfully!');
   };
 
   const handleCreateGroupDonationVote = (payload: GroupDonationVotePayload) => {
@@ -291,8 +284,8 @@ const handleBuyPoints = (points: number, euroAmount: number) => {
     setPendingGroupVotes((prev) => [newVote, ...prev]);
 
     toast.success(
-      `${t.groupVoteCreatedFor} ${payload.ngoName} ${t.inGroup} ${
-        adminGroups.find((group) => group.id === payload.groupId)?.name ?? t.groupFallback
+      `Group vote created for ${payload.ngoName} in ${
+        adminGroups.find((group) => group.id === payload.groupId)?.name ?? 'group'
       }`
     );
   };
@@ -303,83 +296,79 @@ const handleBuyPoints = (points: number, euroAmount: number) => {
 
   const navItems = [
     { id: 'home', label: t.home, icon: Home },
-    { id: 'social', label: t.social, icon: Users },
-    { id: 'finance', label: t.finance, icon: Wallet },
-    { id: 'store', label: t.store, icon: ShoppingBag },
+    { id: 'social', label: 'Social', icon: Users },
+    { id: 'finance', label: 'Finance', icon: Wallet },
+    { id: 'store', label: 'Store', icon: ShoppingBag },
     { id: 'profile', label: t.profile, icon: User },
   ];
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background">
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]">
-        {activeTab === 'home' && (
-          <ScreenGradientLayout>
-            <div className="space-y-4">
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('profile')}
-                  className="absolute left-4 top-[max(0.85rem,calc(env(safe-area-inset-top)+0.35rem))] z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/45 bg-white/20 text-white shadow-md backdrop-blur-md transition hover:bg-white/30"
-                  aria-label={t.profile}
-                >
-                  <User className="h-5 w-5" strokeWidth={2} />
-                </button>
+        {/* HOME */}
+{activeTab === 'home' && (
+  <ScreenGradientLayout>
+    <div className="space-y-4">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setActiveTab('profile')}
+          className="absolute left-4 top-[max(0.85rem,calc(env(safe-area-inset-top)+0.35rem))] z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/45 bg-white/20 text-white shadow-md backdrop-blur-md transition hover:bg-white/30"
+          aria-label="Profile"
+        >
+          <User className="h-5 w-5" strokeWidth={2} />
+        </button>
+        <PointsDisplay
+          totalPoints={totalPoints}
+          onAddPoints={() => setActiveTab('profile')}
+          onMove={() => setActiveTab('social')}
+          onData={() => setActiveTab('finance')}
+          onAchievements={() => setActiveTab('achievements')}
+        />
+      </div>
+      <div className="space-y-4 px-4 pb-6">
+        <HomeBudgetPanel
+          expenses={expenses}
+          monthlyGoal={monthlyGoal}
+          totalSpent={totalSpent}
+          remainingBudget={remainingBudget}
+          percentageUsed={percentageUsed}
+        />
+        <HomeActiveChallenges />
+        <ImpactSnapshotSection expenses={expenses} />
+        <RecentTransactions
+          expenses={thisMonthExpenses}
+          onSeeAll={() => setActiveTab('finance')}
+        />
+      </div>
+    </div>
+  </ScreenGradientLayout>
+)}
 
-                <PointsDisplay
-                  totalPoints={totalPoints}
-                  onAddPoints={() => setActiveTab('profile')}
-                  onMove={() => setActiveTab('social')}
-                  onData={() => setActiveTab('finance')}
-                  onAchievements={() => setActiveTab('premium')}
-                />
-              </div>
-
-              <div className="space-y-4 px-4 pb-6">
-                <HomeBudgetPanel
-                  expenses={expenses}
-                  monthlyGoal={monthlyGoal}
-                  totalSpent={totalSpent}
-                  remainingBudget={remainingBudget}
-                  percentageUsed={percentageUsed}
-                />
-
-                <BudgetTracker
-                  monthlyGoal={monthlyGoal}
-                  totalSpent={totalSpent}
-                  remainingBudget={remainingBudget}
-                  percentageUsed={percentageUsed}
-                />
-
-                <ImpactSnapshotSection expenses={expenses} />
-
-                <RecentTransactions
-                  expenses={thisMonthExpenses}
-                  onSeeAll={() => setActiveTab('finance')}
-                />
-              </div>
-            </div>
-          </ScreenGradientLayout>
+        {activeTab === 'achievements' && (
+          <Achievements totalPoints={totalPoints} totalSaved={savedAmount} friendCount={friendCount} />
         )}
 
         {activeTab === 'premium' && (
           <div className="space-y-4 px-4 pb-6 pt-4">
-            <Card className="relative overflow-hidden border-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 text-white shadow-lg">
-              <button
-                type="button"
-                onClick={() => setActiveTab('home')}
-                className="absolute left-4 top-5 flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white backdrop-blur-sm transition hover:bg-white/20"
-                aria-label={t.backToHome}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('home')}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background shadow-sm transition hover:bg-muted"
+              aria-label="Back to home"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
 
-              <CardContent className="px-6 pb-6 pt-16 text-center">
+            <Card className="overflow-hidden border-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 text-white shadow-lg">
+              <CardContent className="p-6 text-center">
                 <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
                   <span className="text-2xl">✨</span>
                 </div>
-
-                <h2 className="mb-2 text-2xl font-bold">{t.premiumTitle}</h2>
-                <p className="text-sm text-white/90">{t.premiumSubtitle}</p>
+                <h2 className="mb-2 text-2xl font-bold">Impact Wallet Premium</h2>
+                <p className="text-sm text-white/90">
+                  Mais inteligência, mais controlo e mais vantagens todos os meses
+                </p>
               </CardContent>
             </Card>
 
@@ -387,32 +376,32 @@ const handleBuyPoints = (points: number, euroAmount: number) => {
               <CardContent className="space-y-3 p-5">
                 <div className="flex items-start gap-3">
                   <span className="text-emerald-600">✅</span>
-                  <p className="text-sm font-medium">{t.premiumBenefit1}</p>
+                  <p className="text-sm font-medium">+ 10 pontos por mês</p>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <span className="text-emerald-600">✅</span>
-                  <p className="text-sm font-medium">{t.premiumBenefit2}</p>
+                  <p className="text-sm font-medium">Inteligência artificial que ajuda</p>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <span className="text-emerald-600">✅</span>
-                  <p className="text-sm font-medium">{t.premiumBenefit3}</p>
+                  <p className="text-sm font-medium">Melhor previsão financeira</p>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <span className="text-emerald-600">✅</span>
-                  <p className="text-sm font-medium">{t.premiumBenefit4}</p>
+                  <p className="text-sm font-medium">Desafios por mês</p>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <span className="text-emerald-600">✅</span>
-                  <p className="text-sm font-medium">{t.premiumBenefit5}</p>
+                  <p className="text-sm font-medium">Ofertas / descontos exclusivas</p>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <span className="text-emerald-600">✅</span>
-                  <p className="text-sm font-medium">{t.premiumBenefit6}</p>
+                  <p className="text-sm font-medium">Alertas inteligentes</p>
                 </div>
               </CardContent>
             </Card>
@@ -420,20 +409,20 @@ const handleBuyPoints = (points: number, euroAmount: number) => {
             <Card className="border-border/80 shadow-sm">
               <CardContent className="space-y-4 p-6 text-center">
                 <div>
-                  <p className="text-sm text-muted-foreground">{t.monthlyPlan}</p>
+                  <p className="text-sm text-muted-foreground">Plano mensal</p>
                   <p className="mt-1 text-4xl font-bold tracking-tight">2,99€</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{t.perMonth}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">por mês</p>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => alert(t.premiumActivated)}
+                  onClick={() => alert('Premium activated!')}
                   className="w-full rounded-2xl bg-emerald-600 py-3.5 text-base font-semibold text-white transition hover:bg-emerald-700"
                 >
-                  {t.upgradeNow}
+                  Upgrade Now
                 </button>
 
-                <p className="text-xs text-muted-foreground">{t.cancelAnytime}</p>
+                <p className="text-xs text-muted-foreground">Cancela quando quiseres</p>
               </CardContent>
             </Card>
           </div>
@@ -452,15 +441,15 @@ const handleBuyPoints = (points: number, euroAmount: number) => {
         )}
 
         {activeTab === 'store' && (
-  <Store
-    totalPoints={totalPoints}
-    onRedeem={handleRedeem}
-    onBuyPoints={handleBuyPoints}
-    isGroupAdmin={isGroupAdmin}
-    adminGroups={adminGroups}
-    onCreateGroupDonationVote={handleCreateGroupDonationVote}
-  />
-)}
+          <Store
+            totalPoints={totalPoints}
+            onRedeem={handleRedeem}
+            isGroupAdmin={isGroupAdmin}
+            adminGroups={adminGroups}
+            onCreateGroupDonationVote={handleCreateGroupDonationVote}
+          />
+        )}
+
         {activeTab === 'profile' && (
           <ProfileScreen
             userEmail={userEmail}
@@ -486,6 +475,8 @@ const handleBuyPoints = (points: number, euroAmount: number) => {
         {activeTab === 'social' && (
           <Friends
             totalPoints={totalPoints}
+            totalSaved={savedAmount}
+            friendCount={friendCount}
             onSendPoints={handleSendPoints}
             onRequestPoints={handleRequestPoints}
           />

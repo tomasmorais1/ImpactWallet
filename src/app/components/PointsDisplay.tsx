@@ -1,6 +1,5 @@
 import { Plus, ArrowLeftRight, Landmark, Trophy } from 'lucide-react';
 import impactPointsLogo from '../assets/impact-points-logo.png';
-import { useSettings } from '../contexts/SettingsContext';
 
 interface PointsDisplayProps {
   totalPoints: number;
@@ -17,13 +16,11 @@ export function PointsDisplay({
   onData,
   onAchievements,
 }: PointsDisplayProps) {
-  const { t } = useSettings();
-
   const actions = [
-    { label: t.addPoints, icon: Plus, onClick: onAddPoints },
-    { label: t.move, icon: ArrowLeftRight, onClick: onMove },
-    { label: t.data, icon: Landmark, onClick: onData },
-    { label: t.achievements, icon: Trophy, onClick: onAchievements },
+    { label: 'Adicionar pontos', icon: Plus, onClick: onAddPoints },
+    { label: 'Mover', icon: ArrowLeftRight, onClick: onMove },
+    { label: 'Dados', icon: Landmark, onClick: onData },
+    { label: 'Conquistas', icon: Trophy, onClick: onAchievements },
   ] as const;
 
   return (
@@ -31,14 +28,12 @@ export function PointsDisplay({
       <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
       <div className="pointer-events-none absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-emerald-400/15 blur-2xl dark:bg-teal-400/10" />
 
-      <p className="relative text-center text-sm font-medium text-white/90 drop-shadow-sm">
-        {t.impactPoints}
-      </p>
+      <p className="relative text-center text-sm font-medium text-white/90 drop-shadow-sm">Impact Points</p>
 
       <div className="relative mt-6 flex items-center justify-center gap-3">
         <img
           src={impactPointsLogo}
-          alt={t.impactPointsLogoAlt}
+          alt="Impact Points logo"
           className="h-[3.25rem] w-[3.25rem] shrink-0 object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
         />
         <span className="text-[3.25rem] font-bold leading-none tracking-tight tabular-nums">

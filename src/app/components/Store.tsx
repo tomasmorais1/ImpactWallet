@@ -11,15 +11,13 @@ import {
   Share2,
   MapPin,
   CheckCircle2,
-  Plus,
-  CreditCard,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import { Switch } from './ui/switch';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 import { cn } from './ui/utils';
-import { useSettings, type Translations } from '../contexts/SettingsContext';
+import { useSettings } from '../contexts/SettingsContext';
 import impactPointsLogo from '../assets/impact-points-logo.png';
 import {
   CHARITIES,
@@ -61,27 +59,12 @@ export interface GroupDonationVotePayload {
 interface StoreProps {
   totalPoints: number;
   onRedeem: (cost: number, label: string) => void;
-  onBuyPoints: (points: number, euroAmount: number) => void;
   isGroupAdmin?: boolean;
   adminGroups?: StoreGroupOption[];
   onCreateGroupDonationVote?: (payload: GroupDonationVotePayload) => void;
 }
 
 type StoreTab = 'donations' | 'discounts' | 'contribution';
-
-type BuyPointsPack = {
-  id: string;
-  euro: number;
-  points: number;
-  labelKey: 'starter' | 'popular' | 'bestValue' | 'premiumTitle';
-};
-
-const BUY_POINTS_PACKS: BuyPointsPack[] = [
-  { id: 'pack-5', euro: 4.99, points: 500, labelKey: 'starter' },
-  { id: 'pack-10', euro: 9.99, points: 1000, labelKey: 'popular' },
-  { id: 'pack-25', euro: 24.99, points: 2500, labelKey: 'bestValue' },
-  { id: 'pack-50', euro: 49.99, points: 5000, labelKey: 'premiumTitle' },
-];
 
 function readUserDonationEur(): number {
   const v = parseFloat(localStorage.getItem(USER_DONATION_TOTAL_KEY) || '0');
@@ -107,21 +90,8 @@ function persistDonation(charityId: string, euroAmount: number) {
   localStorage.setItem(USER_DONATION_BY_CHARITY_KEY, JSON.stringify(by));
 }
 
-function makeFormatPoints(formatNumber: (n: number, options?: Intl.NumberFormatOptions) => string) {
-  return (value: number) => formatNumber(value, { maximumFractionDigits: 0 });
-}
-
-function CompletedCampaignRow({
-  campaign,
-  t,
-  formatPoints,
-}: {
-  campaign: CompletedCampaign;
-  t: Translations;
-  formatPoints: (n: number) => string;
-}) {
+function CompletedCampaignRow({ campaign }: { campaign: CompletedCampaign }) {
   const pct = Math.min(100, (campaign.raisedPoints / campaign.goalPoints) * 100);
-
   return (
     <div className="rounded-xl border border-border bg-muted/30 p-3 dark:bg-zinc-900/40">
       <div className="flex items-start justify-between gap-2">
@@ -131,35 +101,21 @@ function CompletedCampaignRow({
         </div>
         <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-800 dark:text-emerald-300">
           <CheckCircle2 className="h-3 w-3" aria-hidden />
-          {t.completed}
+          Concluída
         </span>
       </div>
       <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
         <span>
-          {formatPoints(campaign.raisedPoints)} / {formatPoints(campaign.goalPoints)} {t.pointsShort}
+          {campaign.raisedPoints.toLocaleString('pt-PT')} / {campaign.goalPoints.toLocaleString('pt-PT')} pts
         </span>
         <span>{campaign.completedLabel}</span>
       </div>
-      <Progress
-        value={pct}
-        className="mt-1.5 h-1.5 bg-muted"
-        indicatorClassName="bg-emerald-600 dark:bg-emerald-500"
-      />
+      <Progress value={pct} className="mt-1.5 h-1.5 bg-muted" indicatorClassName="bg-emerald-600 dark:bg-emerald-500" />
     </div>
   );
 }
 
-function LeiriaCampaignCard({
-  onOpen,
-  t,
-  formatPoints,
-  formatCurrency,
-}: {
-  onOpen: () => void;
-  t: Translations;
-  formatPoints: (n: number) => string;
-  formatCurrency: (n: number) => string;
-}) {
+function LeiriaCampaignCard({ onOpen }: { onOpen: () => void }) {
   const raised = getLeiriaCampaignRaisedPoints();
   const goal = LEIRIA_CAMPAIGN_GOAL_POINTS;
   const pct = Math.min(100, (raised / goal) * 100);
@@ -184,7 +140,7 @@ function LeiriaCampaignCard({
         <div className="min-w-0 flex-1">
           <h3 className="text-lg font-bold leading-tight tracking-tight">Ajuda Leiria</h3>
           <p className="mt-1 text-xs leading-snug text-white/85">
-            {t.contributionGlobalCommunityLeiria}
+            Contribuição global da comunidade Impact Wallet para apoiar projetos na região.
           </p>
         </div>
         <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-white/70" aria-hidden />
@@ -193,11 +149,13 @@ function LeiriaCampaignCard({
       <div className="relative mt-4 space-y-2">
         <div className="flex items-baseline justify-between gap-2 text-xs font-medium tabular-nums">
           <span className="text-white">
-            {formatPoints(raised)} {t.pointsShort}
-            <span className="ml-1 font-normal text-white/70">(~{formatCurrency(raisedEur)})</span>
+            {raised.toLocaleString('pt-PT')} pts
+            <span className="ml-1 font-normal text-white/70">
+              (~{raisedEur.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} €)
+            </span>
           </span>
           <span className="shrink-0 text-white/80">
-            {formatPoints(goal)} {t.pointsShort} · {formatCurrency(LEIRIA_CAMPAIGN_GOAL_EUR)}
+            {goal.toLocaleString('pt-PT')} pts · {LEIRIA_CAMPAIGN_GOAL_EUR.toLocaleString('pt-PT')} €
           </span>
         </div>
         <Progress value={pct} className="h-2.5 bg-white/20" indicatorClassName="bg-white shadow-sm" />
@@ -209,21 +167,17 @@ function LeiriaCampaignCard({
 export function Store({
   totalPoints,
   onRedeem,
-  onBuyPoints,
   isGroupAdmin = false,
   adminGroups = [],
   onCreateGroupDonationVote,
 }: StoreProps) {
-  const { formatCurrency, formatNumber, t } = useSettings();
-  const formatPoints = makeFormatPoints(formatNumber);
+  const { formatCurrency } = useSettings();
 
   const [tab, setTab] = useState<StoreTab>('donations');
   const [detail, setDetail] = useState<Charity | null>(null);
   const [leiriaDetailOpen, setLeiriaDetailOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [groupDonateOpen, setGroupDonateOpen] = useState(false);
-  const [buyPointsOpen, setBuyPointsOpen] = useState(false);
-  const [selectedPack, setSelectedPack] = useState<BuyPointsPack>(BUY_POINTS_PACKS[1]);
   const [selectedEur, setSelectedEur] = useState<number>(10);
   const [recurring, setRecurring] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
@@ -267,15 +221,8 @@ export function Store({
 
   const openDonate = () => setDonateOpen(true);
   const openDonateInGroup = () => setGroupDonateOpen(true);
-  const openBuyPoints = () => setBuyPointsOpen(true);
 
   const netToCharity = (eur: number) => Math.max(0, eur * 0.865);
-
-  const handleConfirmBuyPoints = () => {
-    onBuyPoints(selectedPack.points, selectedPack.euro);
-    toast.success(`${t.buyPoints}: ${formatPoints(selectedPack.points)} ${t.pointsShort}`);
-    setBuyPointsOpen(false);
-  };
 
   const confirmDonation = () => {
     const recipient = donationRecipient;
@@ -284,13 +231,11 @@ export function Store({
     const pts = eurosToPoints(selectedEur);
 
     if (totalPoints < pts) {
-      toast.error(t.enoughPointsBuyMore);
-      setDonateOpen(false);
-      setBuyPointsOpen(true);
+      toast.error('Não tens pontos suficientes.');
       return;
     }
 
-    onRedeem(pts, `${t.donateWithPoints} · ${recipient.name}`);
+    onRedeem(pts, `Doação ${selectedEur} € · ${recipient.name}`);
     persistDonation(recipient.id, selectedEur);
 
     if (recipient.id === LEIRIA_CAMPAIGN_ID) {
@@ -302,8 +247,8 @@ export function Store({
 
     toast.success(
       recurring
-        ? `${t.recurringDonationActivatedFor} ${recipient.name}: ${formatCurrency(selectedEur)} ${t.perMonthText}`
-        : `${t.donationRegisteredFor} ${recipient.name}: ${formatCurrency(selectedEur)}`,
+        ? `Doação recorrente ativada: ${selectedEur} € / mês em pontos para ${recipient.name}`
+        : `Doação de ${selectedEur} € registada para ${recipient.name}`,
     );
 
     setDonateOpen(false);
@@ -315,16 +260,14 @@ export function Store({
     if (!recipient) return;
 
     if (!selectedGroupId) {
-      toast.error(t.selectAGroup);
+      toast.error('Seleciona um grupo.');
       return;
     }
 
     const pts = eurosToPoints(selectedEur);
 
     if (totalPoints < pts) {
-      toast.error(t.enoughPointsBuyMore);
-      setGroupDonateOpen(false);
-      setBuyPointsOpen(true);
+      toast.error('Não tens pontos suficientes.');
       return;
     }
 
@@ -336,19 +279,19 @@ export function Store({
       points: pts,
     });
 
-    toast.success(`${t.voteCreatedInGroupFor} ${recipient.name}`);
+    toast.success(`Votação criada no chat do grupo para ${recipient.name}`);
     setGroupDonateOpen(false);
     setSelectedGroupId('');
   };
 
   const redeemDiscount = (offer: DiscountOffer) => {
     if (totalPoints < offer.costPoints) {
-      toast.error(t.notEnoughPoints);
+      toast.error('Não tens pontos suficientes.');
       return;
     }
 
-    onRedeem(offer.costPoints, `${t.storeDiscountsTab} ${offer.brand} · ${offer.title}`);
-    toast.success(`${t.codeSent}: ${offer.brand} — ${offer.title}`);
+    onRedeem(offer.costPoints, `Desconto ${offer.brand} · ${offer.title}`);
+    toast.success(`Código enviado: ${offer.brand} — ${offer.title}`);
   };
 
   return (
@@ -358,37 +301,25 @@ export function Store({
         <div className="pointer-events-none absolute -bottom-16 -left-12 h-48 w-48 rounded-full bg-emerald-400/25 blur-2xl dark:bg-cyan-500/20" />
 
         <div className="relative flex items-center justify-between gap-3">
-          <h1 className="text-xl font-bold tracking-tight text-white drop-shadow-sm">{t.store}</h1>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={openBuyPoints}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white shadow-sm backdrop-blur-sm transition hover:bg-white/20"
-              aria-label={t.buyPoints}
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-
-            <div className="flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1.5 shadow-sm backdrop-blur-sm">
-              <img
-                src={impactPointsLogo}
-                alt=""
-                className="h-6 w-6 object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
-              />
-              <span className="text-base font-bold tabular-nums text-white">
-                {formatPoints(totalPoints)}
-              </span>
-            </div>
+          <h1 className="text-xl font-bold tracking-tight text-white drop-shadow-sm">Store</h1>
+          <div className="flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1.5 shadow-sm backdrop-blur-sm">
+            <img
+              src={impactPointsLogo}
+              alt=""
+              className="h-6 w-6 object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
+            />
+            <span className="text-base font-bold tabular-nums text-white">
+              {totalPoints.toLocaleString()}
+            </span>
           </div>
         </div>
 
         <div className="relative mt-4 flex rounded-2xl border border-white/20 bg-black/15 p-1 backdrop-blur-md dark:bg-black/25">
           {(
             [
-              { id: 'donations' as const, label: t.storeDonationsTab },
-              { id: 'discounts' as const, label: t.storeDiscountsTab },
-              { id: 'contribution' as const, label: t.storeContributionTab },
+              { id: 'donations' as const, label: 'Doações' },
+              { id: 'discounts' as const, label: 'Descontos' },
+              { id: 'contribution' as const, label: 'Contribuição' },
             ] as const
           ).map(({ id, label }) => (
             <button
@@ -417,23 +348,23 @@ export function Store({
         {tab === 'donations' && !detail && !leiriaDetailOpen && (
           <section className="space-y-3">
             <button
-              type="button"
-              onClick={() => setPastCampaignsOpen((o) => !o)}
-              className="flex w-full items-center justify-between gap-2 rounded-lg py-0.5 text-left text-sm text-muted-foreground transition hover:text-foreground"
-            >
-              <span className="flex items-center gap-1.5 font-medium">
-                {t.campaigns}
-                <span
-                  className={cn(
-                    'inline-block font-mono text-sm text-muted-foreground/90 transition-transform duration-300 ease-out',
-                    pastCampaignsOpen && 'rotate-90',
-                  )}
-                  aria-hidden
-                >
-                  &gt;
-                </span>
+            type="button"
+            onClick={() => setPastCampaignsOpen((o) => !o)}
+            className="flex w-full items-center justify-between gap-2 rounded-lg py-0.5 text-left text-sm text-muted-foreground transition hover:text-foreground"
+          >
+            <span className="flex items-center gap-1.5 font-medium">
+              Campanhas
+              <span
+                className={cn(
+                  'inline-block font-mono text-sm text-muted-foreground/90 transition-transform duration-300 ease-out',
+                  pastCampaignsOpen && 'rotate-90',
+                )}
+                aria-hidden
+              >
+                &gt;
               </span>
-            </button>
+            </span>
+          </button>
 
             <LeiriaCampaignCard
               key={leiriaProgressKey}
@@ -441,41 +372,33 @@ export function Store({
                 setDetail(null);
                 setLeiriaDetailOpen(true);
               }}
-              t={t}
-              formatPoints={formatPoints}
-              formatCurrency={formatCurrency}
             />
 
-            <div
-              className={cn(
-                'grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none',
-                pastCampaignsOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-              )}
-            >
-              <div className="min-h-0 overflow-hidden">
-                <div className="space-y-2 pt-1">
-                  {COMPLETED_CAMPAIGNS.slice(0, 2).map((c) => (
-                    <CompletedCampaignRow
-                      key={c.id}
-                      campaign={c}
-                      t={t}
-                      formatPoints={formatPoints}
-                    />
-                  ))}
-                  <div className="flex justify-center pt-0.5">
-                    <button
-                      type="button"
-                      onClick={goToContributionCampanhas}
-                      className="text-xs font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-400"
-                    >
-                      {t.seeMore}
-                    </button>
-                  </div>
+  
+          <div
+            className={cn(
+              'grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none',
+              pastCampaignsOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+            )}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div className="space-y-2 pt-1">
+                {COMPLETED_CAMPAIGNS.slice(0, 2).map((c) => (
+                  <CompletedCampaignRow key={c.id} campaign={c} />
+                ))}
+                <div className="flex justify-center pt-0.5">
+                  <button
+                    type="button"
+                    onClick={goToContributionCampanhas}
+                    className="text-xs font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-400"
+                  >
+                    ver mais
+                  </button>
                 </div>
               </div>
             </div>
-
-            <p className="text-sm text-muted-foreground">{t.charities}</p>
+          </div>
+          <p className="text-sm text-muted-foreground">Instituições de caridade</p>
             <div className="grid grid-cols-2 gap-3">
               {CHARITIES.map((c) => (
                 <button
@@ -489,7 +412,11 @@ export function Store({
                 >
                   {c.image ? (
                     <>
-                      <img src={c.image} alt={c.name} className="absolute inset-0 h-full w-full object-cover" />
+                      <img
+                        src={c.image}
+                        alt={c.name}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
                       <div className="absolute inset-0 bg-black/25" />
                     </>
                   ) : (
@@ -506,7 +433,9 @@ export function Store({
 
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 pt-10">
                     <p className="line-clamp-2 text-sm font-bold leading-tight text-white">{c.name}</p>
-                    <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-white/85">{c.tagline}</p>
+                    <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-white/85">
+                      {c.tagline}
+                    </p>
                   </div>
                 </button>
               ))}
@@ -519,7 +448,6 @@ export function Store({
             userToCampaignEur={userLeiriaCampaignEur}
             globalUserTotalEur={userDonationEur}
             formatCurrency={formatCurrency}
-            formatPoints={formatPoints}
             onBack={() => setLeiriaDetailOpen(false)}
             onDonate={openDonate}
             onDonateInGroup={openDonateInGroup}
@@ -529,7 +457,6 @@ export function Store({
             }}
             isGroupAdmin={isGroupAdmin}
             adminGroups={adminGroups}
-            t={t}
           />
         )}
 
@@ -537,21 +464,22 @@ export function Store({
           <CharityDetail
             charity={detail}
             userToThisCharityEur={charityUserTotal}
-            globalUserTotalEur={userDonationEur}
             formatCurrency={formatCurrency}
             onBack={() => setDetail(null)}
             onDonate={openDonate}
             onDonateInGroup={openDonateInGroup}
             onSelectCharity={(c) => setDetail(c)}
+            globalUserTotalEur={userDonationEur}
             isGroupAdmin={isGroupAdmin}
             adminGroups={adminGroups}
-            t={t}
           />
         )}
 
         {tab === 'discounts' && (
           <section className="space-y-3">
-            <p className="text-sm text-muted-foreground">{t.fixedOffersDescription}</p>
+            <p className="text-sm text-muted-foreground">
+              Ofertas fixas — resgata com pontos; o desconto já está definido pela marca.
+            </p>
             <div className="grid grid-cols-2 gap-3">
               {DISCOUNT_OFFERS.map((offer) => (
                 <DiscountCard
@@ -559,8 +487,6 @@ export function Store({
                   offer={offer}
                   totalPoints={totalPoints}
                   onRedeem={() => redeemDiscount(offer)}
-                  t={t}
-                  formatPoints={formatPoints}
                 />
               ))}
             </div>
@@ -571,9 +497,7 @@ export function Store({
           <ContributionPanel
             userTotalEur={userDonationEur}
             formatCurrency={formatCurrency}
-            formatNumber={formatNumber}
             onRefresh={refreshUserTotal}
-            t={t}
           />
         )}
 
@@ -583,10 +507,10 @@ export function Store({
             className="max-h-[88vh] overflow-y-auto rounded-t-2xl border-t bg-background px-4 pb-8 pt-3 sm:mx-auto sm:max-w-md"
           >
             <SheetHeader className="space-y-1 text-left">
-              <SheetTitle className="text-lg">{t.donateWithPoints}</SheetTitle>
+              <SheetTitle className="text-lg">Doar com pontos</SheetTitle>
               <p className="text-sm text-muted-foreground">
-                {detail?.name ?? (leiriaDetailOpen ? 'Ajuda Leiria' : t.selectedInstitution)} · {t.pointsToEuroRate}{' '}
-                {POINTS_PER_EURO} {t.pointsShort} = 1
+                {detail?.name ?? (leiriaDetailOpen ? 'Ajuda Leiria' : 'Instituição')} · equivalência{' '}
+                {POINTS_PER_EURO} pts = 1 €
               </p>
             </SheetHeader>
 
@@ -607,10 +531,10 @@ export function Store({
                         : 'border-border bg-muted/30 hover:bg-muted/50',
                     )}
                   >
-                    <span className="text-lg font-bold tabular-nums">{formatCurrency(eur)}</span>
+                    <span className="text-lg font-bold tabular-nums">{eur} €</span>
                     <span className="mt-1 flex items-center gap-1 text-xs font-medium text-muted-foreground">
                       <img src={impactPointsLogo} alt="" className="h-3.5 w-3.5 opacity-80" />
-                      {formatPoints(pts)} {t.pointsShort}
+                      {pts.toLocaleString()} pts
                     </span>
                   </button>
                 );
@@ -621,8 +545,8 @@ export function Store({
               <div className="flex items-center gap-2">
                 <Repeat className="h-4 w-4 text-emerald-600" />
                 <div>
-                  <p className="text-sm font-medium">{t.recurringDonation}</p>
-                  <p className="text-xs text-muted-foreground">{t.recurringDonationDesc}</p>
+                  <p className="text-sm font-medium">Doação recorrente</p>
+                  <p className="text-xs text-muted-foreground">Renova todos os meses em pontos</p>
                 </div>
               </div>
               <Switch checked={recurring} onCheckedChange={setRecurring} />
@@ -631,8 +555,11 @@ export function Store({
             <div className="mt-4 flex gap-2 rounded-xl border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
               <Info className="mt-0.5 h-4 w-4 shrink-0" />
               <span>
-                {t.estimatedNetAfterFees}{' '}
-                <strong className="text-foreground">{formatCurrency(netToCharity(selectedEur))}</strong>.
+                Estimativa: a instituição recebe cerca de{' '}
+                <strong className="text-foreground">
+                  {formatCurrency(netToCharity(selectedEur))}
+                </strong>{' '}
+                após taxas (valor indicativo).
               </span>
             </div>
 
@@ -640,19 +567,18 @@ export function Store({
               type="button"
               className="mt-5 h-12 w-full rounded-2xl bg-foreground text-background hover:bg-foreground/90"
               onClick={confirmDonation}
-              disabled={!donationRecipient}
+              disabled={!donationRecipient || totalPoints < eurosToPoints(selectedEur)}
             >
-              {t.confirmDonation} · {formatPoints(eurosToPoints(selectedEur))} {t.pointsShort}
+              Confirmar doação · {eurosToPoints(selectedEur).toLocaleString()} pts
             </Button>
 
             <Button
               type="button"
-              variant="outline"
-              className="mt-2 h-11 w-full rounded-2xl"
-              onClick={openBuyPoints}
+              variant="ghost"
+              className="mt-2 w-full text-sm"
+              onClick={() => toast.info('Brevemente: ganhar mais pontos no orçamento.')}
             >
-              <CreditCard className="mr-2 h-4 w-4" />
-              {t.buyPoints}
+              Obter mais pontos
             </Button>
           </SheetContent>
         </Sheet>
@@ -663,19 +589,20 @@ export function Store({
             className="max-h-[88vh] overflow-y-auto rounded-t-2xl border-t bg-background px-4 pb-8 pt-3 sm:mx-auto sm:max-w-md"
           >
             <SheetHeader className="space-y-1 text-left">
-              <SheetTitle className="text-lg">{t.donateInGroup}</SheetTitle>
+              <SheetTitle className="text-lg">Doar em grupo</SheetTitle>
               <p className="text-sm text-muted-foreground">
-                {t.createGroupVoteFor} {detail?.name ?? (leiriaDetailOpen ? 'Ajuda Leiria' : t.selectedInstitution)}
+                Cria uma votação no chat do grupo para{' '}
+                {detail?.name ?? (leiriaDetailOpen ? 'Ajuda Leiria' : 'a instituição selecionada')}
               </p>
             </SheetHeader>
 
             <div className="mt-4 space-y-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium">{t.selectGroup}</label>
+                <label className="text-sm font-medium">Seleciona o grupo</label>
 
                 {adminGroups.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-                    {t.noAdminGroups}
+                    Não tens grupos onde sejas admin.
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -700,13 +627,11 @@ export function Store({
                             </div>
                             <div>
                               <p className="text-sm font-medium">{group.name}</p>
-                              <p className="text-xs text-muted-foreground">{t.adminGroup}</p>
+                              <p className="text-xs text-muted-foreground">Admin group</p>
                             </div>
                           </div>
 
-                          {isSelected && (
-                            <span className="text-xs font-semibold text-emerald-600">{t.selected}</span>
-                          )}
+                          {isSelected && <span className="text-xs font-semibold text-emerald-600">Selecionado</span>}
                         </button>
                       );
                     })}
@@ -715,13 +640,12 @@ export function Store({
               </div>
 
               <div className="rounded-xl border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
-                {t.groupVoteSummaryPrefix}{' '}
-                <strong className="text-foreground">{formatCurrency(selectedEur)}</strong>{' '}
-                ({formatPoints(eurosToPoints(selectedEur))} {t.pointsShort})
+                Vai ser criada uma votação no chat do grupo para aprovar a doação de{' '}
+                <strong className="text-foreground">{selectedEur} €</strong>{' '}
+                ({eurosToPoints(selectedEur).toLocaleString()} pts)
                 {selectedGroup ? (
                   <>
-                    {' '}
-                    {t.forGroup} <strong className="text-foreground">{selectedGroup.name}</strong>.
+                    {' '}para o grupo <strong className="text-foreground">{selectedGroup.name}</strong>.
                   </>
                 ) : (
                   '.'
@@ -734,104 +658,9 @@ export function Store({
                 onClick={confirmGroupDonationVote}
                 disabled={!donationRecipient || adminGroups.length === 0 || !selectedGroupId}
               >
-                {t.createGroupVote}
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="h-11 w-full rounded-2xl"
-                onClick={openBuyPoints}
-              >
-                <CreditCard className="mr-2 h-4 w-4" />
-                {t.buyPoints}
+                Criar votação no grupo
               </Button>
             </div>
-          </SheetContent>
-        </Sheet>
-
-        <Sheet open={buyPointsOpen} onOpenChange={setBuyPointsOpen}>
-          <SheetContent
-            side="bottom"
-            className="max-h-[90vh] overflow-y-auto rounded-t-2xl border-t bg-background px-4 pb-8 pt-3 sm:mx-auto sm:max-w-md"
-          >
-            <SheetHeader className="space-y-1 text-left">
-              <SheetTitle className="text-lg">{t.buyPoints}</SheetTitle>
-              <p className="text-sm text-muted-foreground">{t.buyPointsWithCard}</p>
-            </SheetHeader>
-
-            <div className="mt-4 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4 dark:border-emerald-900 dark:from-emerald-950/30 dark:to-teal-950/30">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm dark:bg-zinc-900">
-                  <CreditCard className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">{t.paymentWithCard}</p>
-                  <p className="text-xs text-muted-foreground">{t.securePointsPurchaseSimulation}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              {BUY_POINTS_PACKS.map((pack) => {
-                const isSelected = selectedPack.id === pack.id;
-                const labelText =
-                  pack.labelKey === 'starter'
-                    ? t.starter
-                    : pack.labelKey === 'popular'
-                    ? t.popular
-                    : pack.labelKey === 'bestValue'
-                    ? t.bestValue
-                    : t.premiumTitle;
-
-                return (
-                  <button
-                    key={pack.id}
-                    type="button"
-                    onClick={() => setSelectedPack(pack)}
-                    className={cn(
-                      'rounded-2xl border-2 p-4 text-left transition',
-                      isSelected
-                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
-                        : 'border-border bg-card hover:bg-muted/40',
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium">
-                        {labelText}
-                      </span>
-                    </div>
-
-                    <div className="mt-3 flex items-center gap-2">
-                      <img src={impactPointsLogo} alt="" className="h-5 w-5 object-contain" />
-                      <span className="text-lg font-bold">
-                        {formatPoints(pack.points)} {t.pointsShort}
-                      </span>
-                    </div>
-
-                    <p className="mt-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                      {formatCurrency(pack.euro)}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-4 rounded-xl border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
-              {t.buyPointsSummaryPrefix}{' '}
-              <strong className="text-foreground">
-                {formatPoints(selectedPack.points)} {t.pointsShort}
-              </strong>{' '}
-              por <strong className="text-foreground">{formatCurrency(selectedPack.euro)}</strong>.
-            </div>
-
-            <Button
-              type="button"
-              className="mt-5 h-12 w-full rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700"
-              onClick={handleConfirmBuyPoints}
-            >
-              {t.confirmPurchase}
-            </Button>
           </SheetContent>
         </Sheet>
       </div>
@@ -843,26 +672,22 @@ function LeiriaCampaignDetail({
   userToCampaignEur,
   globalUserTotalEur,
   formatCurrency,
-  formatPoints,
   onBack,
   onDonate,
   onDonateInGroup,
   onSelectCharity,
   isGroupAdmin,
   adminGroups,
-  t,
 }: {
   userToCampaignEur: number;
   globalUserTotalEur: number;
   formatCurrency: (n: number) => string;
-  formatPoints: (n: number) => string;
   onBack: () => void;
   onDonate: () => void;
   onDonateInGroup: () => void;
   onSelectCharity: (c: Charity) => void;
   isGroupAdmin: boolean;
   adminGroups: StoreGroupOption[];
-  t: Translations;
 }) {
   const raised = getLeiriaCampaignRaisedPoints();
   const goal = LEIRIA_CAMPAIGN_GOAL_POINTS;
@@ -878,7 +703,7 @@ function LeiriaCampaignDetail({
           type="button"
           onClick={onBack}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-muted"
-          aria-label={t.backToHome}
+          aria-label="Voltar"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -886,7 +711,7 @@ function LeiriaCampaignDetail({
         <button
           type="button"
           className="ml-auto flex h-9 w-9 items-center justify-center rounded-full bg-muted"
-          aria-label="share"
+          aria-label="Partilhar"
         >
           <Share2 className="h-4 w-4" />
         </button>
@@ -907,21 +732,25 @@ function LeiriaCampaignDetail({
 
         <h2 className="mt-4 text-2xl font-bold leading-tight">Ajuda Leiria</h2>
         <p className="mt-2 text-sm leading-snug text-white/85">
-          {t.communityGoal}: {formatPoints(goal)} {t.pointsShort} · {formatCurrency(LEIRIA_CAMPAIGN_GOAL_EUR)}
+          Objetivo da comunidade: {goal.toLocaleString('pt-PT')} pts ·{' '}
+          {LEIRIA_CAMPAIGN_GOAL_EUR.toLocaleString('pt-PT')} €
         </p>
 
         <div className="relative mt-4 space-y-2">
           <div className="flex justify-between text-xs font-medium tabular-nums text-white/90">
             <span>
-              {formatPoints(raised)} {t.pointsShort} (~{formatCurrency(raisedEur)})
+              {raised.toLocaleString('pt-PT')} pts (~
+              {raisedEur.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} €)
             </span>
-            <span className="text-white/75">{t.global}</span>
+            <span className="text-white/75">global</span>
           </div>
           <Progress value={pct} className="h-2.5 bg-white/20" indicatorClassName="bg-white shadow-sm" />
         </div>
 
-        <p className="relative mt-4 text-3xl font-bold tabular-nums">{formatCurrency(userToCampaignEur)}</p>
-        <p className="relative mt-1 text-xs text-white/80">{t.contributedByYouToThisCampaign}</p>
+        <p className="relative mt-4 text-3xl font-bold tabular-nums">
+          {formatCurrency(userToCampaignEur)}
+        </p>
+        <p className="relative mt-1 text-xs text-white/80">Contribuído por ti para esta campanha</p>
 
         <div className="relative mt-5 flex gap-2">
           <Button
@@ -930,7 +759,7 @@ function LeiriaCampaignDetail({
             className="h-11 rounded-full bg-white/20 px-6 text-white backdrop-blur hover:bg-white/30"
           >
             <Heart className="mr-2 h-4 w-4 fill-white/30" />
-            {t.donations}
+            Doar
           </Button>
 
           {isGroupAdmin && adminGroups.length > 0 && (
@@ -940,32 +769,32 @@ function LeiriaCampaignDetail({
               className="h-11 rounded-full bg-white px-6 text-teal-900 hover:bg-white/90"
             >
               <Users className="mr-2 h-4 w-4" />
-              {t.donateInGroup}
+              Doar em grupo
             </Button>
           )}
         </div>
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold">{t.moreWaysToGive}</h3>
+        <h3 className="text-sm font-semibold">Mais formas de doar</h3>
         <div className="mt-2 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
           <RowAction
             icon={<img src={impactPointsLogo} alt="" className="h-5 w-5 object-contain" />}
-            title={t.donateWithPoints}
-            subtitle={`${t.chooseEuroAmountAndPayInPoints} (${POINTS_PER_EURO} ${t.pointsShort} = 1)`}
+            title="Doar com pontos"
+            subtitle="Escolhe o montante em euros e paga em pontos (100 pts = 1 €)"
             onClick={onDonate}
           />
           <RowAction
             icon={<Repeat className="h-5 w-5 text-sky-500" />}
-            title={t.recurringDonation}
-            subtitle={t.activateMonthlyRenewalInPoints}
+            title="Doação recorrente"
+            subtitle="No ecrã de doação, ativa a renovação mensal em pontos"
             onClick={onDonate}
           />
           {isGroupAdmin && adminGroups.length > 0 && (
             <RowAction
               icon={<Users className="h-5 w-5 text-emerald-600" />}
-              title={t.donateInGroup}
-              subtitle={t.createGroupVoteInChat}
+              title="Doar em grupo"
+              subtitle="Cria uma votação no chat do grupo"
               onClick={onDonateInGroup}
             />
           )}
@@ -973,7 +802,7 @@ function LeiriaCampaignDetail({
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold">{t.aboutCampaign}</h3>
+        <h3 className="text-sm font-semibold">Sobre a campanha</h3>
         <p className="mt-2 whitespace-pre-line rounded-2xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground">
           {LEIRIA_CAMPAIGN_ABOUT}
         </p>
@@ -981,21 +810,21 @@ function LeiriaCampaignDetail({
 
       <div className="rounded-2xl border border-border bg-muted/30 p-4">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{t.impactWalletContributionsThisCampaign}</span>
+          <span>Contribuições Impact Wallet a esta campanha</span>
         </div>
         <div className="mt-2 flex items-end justify-between gap-2">
-          <span className="text-sm text-muted-foreground">{t.totalRaisedDemo}</span>
+          <span className="text-sm text-muted-foreground">Total angariado (demonstrativo)</span>
           <span className="text-lg font-bold tabular-nums">{formatCurrency(networkTotalDemo)}</span>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          {t.yourGlobalDonationsAllInstitutions}{' '}
+          O teu total global em doações (todas as instituições e campanhas):{' '}
           <strong className="text-foreground">{formatCurrency(globalUserTotalEur)}</strong>
         </p>
       </div>
 
       <div>
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">{t.charityInstitutions}</h3>
+          <h3 className="text-sm font-semibold">Instituições de caridade</h3>
         </div>
         <div className="mt-3 flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {others.map((c) => (
@@ -1006,11 +835,10 @@ function LeiriaCampaignDetail({
               className="w-36 shrink-0 overflow-hidden rounded-xl border border-border text-left shadow-sm"
             >
               {c.image ? (
-                <img src={c.image} alt={c.name} className="h-24 w-full object-cover" />
+                <img src={c.image} alt="" className="h-24 w-full object-cover" />
               ) : (
                 <div className={cn('h-24 bg-gradient-to-br', c.gradient)} />
               )}
-
               <div className="p-2">
                 <p className="text-xs font-semibold leading-tight">{c.name}</p>
               </div>
@@ -1019,7 +847,9 @@ function LeiriaCampaignDetail({
         </div>
       </div>
 
-      <p className="text-center text-[10px] text-muted-foreground">{t.demoValuesImpactWallet}</p>
+      <p className="text-center text-[10px] text-muted-foreground">
+        Valores demonstrativos · Impact Wallet
+      </p>
     </div>
   );
 }
@@ -1035,7 +865,6 @@ function CharityDetail({
   onSelectCharity,
   isGroupAdmin,
   adminGroups,
-  t,
 }: {
   charity: Charity;
   userToThisCharityEur: number;
@@ -1047,7 +876,6 @@ function CharityDetail({
   onSelectCharity: (c: Charity) => void;
   isGroupAdmin: boolean;
   adminGroups: StoreGroupOption[];
-  t: Translations;
 }) {
   const others = CHARITIES.filter((c) => c.id !== charity.id).slice(0, 6);
   const networkTotalDemo = 216_116.35;
@@ -1059,7 +887,7 @@ function CharityDetail({
           type="button"
           onClick={onBack}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-muted"
-          aria-label={t.backToHome}
+          aria-label="Voltar"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -1067,7 +895,7 @@ function CharityDetail({
         <button
           type="button"
           className="ml-auto flex h-9 w-9 items-center justify-center rounded-full bg-muted"
-          aria-label="share"
+          aria-label="Partilhar"
         >
           <Share2 className="h-4 w-4" />
         </button>
@@ -1075,7 +903,11 @@ function CharityDetail({
 
       <div className="relative overflow-hidden rounded-2xl border border-white/10 shadow-lg">
         {charity.image ? (
-          <img src={charity.image} alt={charity.name} className="absolute inset-0 h-full w-full object-cover" />
+          <img
+            src={charity.image}
+            alt={charity.name}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
         ) : (
           <div className={cn('absolute inset-0 bg-gradient-to-br', charity.gradient)} />
         )}
@@ -1093,7 +925,7 @@ function CharityDetail({
 
           <h2 className="mt-4 text-2xl font-bold leading-tight">{charity.name}</h2>
           <p className="mt-2 text-3xl font-bold tabular-nums">{formatCurrency(userToThisCharityEur)}</p>
-          <p className="mt-1 text-xs text-white/80">{t.contributedByYouToThisInstitution}</p>
+          <p className="mt-1 text-xs text-white/80">Contribuído por ti para esta instituição</p>
 
           <div className="mt-5 flex gap-2">
             <Button
@@ -1102,7 +934,7 @@ function CharityDetail({
               className="h-11 rounded-full bg-white/20 px-6 text-white backdrop-blur hover:bg-white/30"
             >
               <Heart className="mr-2 h-4 w-4 fill-white/30" />
-              {t.donations}
+              Doar
             </Button>
 
             {isGroupAdmin && adminGroups.length > 0 && (
@@ -1112,7 +944,7 @@ function CharityDetail({
                 className="h-11 rounded-full bg-white px-6 text-teal-900 hover:bg-white/90"
               >
                 <Users className="mr-2 h-4 w-4" />
-                {t.donateInGroup}
+                Doar em grupo
               </Button>
             )}
           </div>
@@ -1120,25 +952,25 @@ function CharityDetail({
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold">{t.moreWaysToGive}</h3>
+        <h3 className="text-sm font-semibold">Mais formas de doar</h3>
         <div className="mt-2 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
           <RowAction
             icon={<img src={impactPointsLogo} alt="" className="h-5 w-5 object-contain" />}
-            title={t.donateWithPoints}
-            subtitle={t.useYourPointsToDoGood}
+            title="Doar com pontos"
+            subtitle="Usa os teus pontos para fazer o bem"
             onClick={onDonate}
           />
           <RowAction
             icon={<Repeat className="h-5 w-5 text-sky-500" />}
-            title={t.recurringDonation}
-            subtitle={t.setMonthlyAmountInPoints}
+            title="Doação recorrente"
+            subtitle="Define um valor mensal em pontos"
             onClick={onDonate}
           />
           {isGroupAdmin && adminGroups.length > 0 && (
             <RowAction
               icon={<Users className="h-5 w-5 text-emerald-600" />}
-              title={t.donateInGroup}
-              subtitle={t.createGroupVoteInChat}
+              title="Doar em grupo"
+              subtitle="Cria uma votação no chat do grupo"
               onClick={onDonateInGroup}
             />
           )}
@@ -1146,7 +978,7 @@ function CharityDetail({
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold">{t.aboutCharity}</h3>
+        <h3 className="text-sm font-semibold">Sobre a instituição de caridade</h3>
         <p className="mt-2 rounded-2xl border border-border bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground">
           {charity.about}
         </p>
@@ -1154,21 +986,21 @@ function CharityDetail({
 
       <div className="rounded-2xl border border-border bg-muted/30 p-4">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{t.impactWalletUserDonations}</span>
+          <span>Doações dos utilizadores Impact Wallet</span>
         </div>
         <div className="mt-2 flex items-end justify-between gap-2">
-          <span className="text-sm text-muted-foreground">{t.totalDonatedEstimated}</span>
+          <span className="text-sm text-muted-foreground">Montante total doado (estimado)</span>
           <span className="text-lg font-bold tabular-nums">{formatCurrency(networkTotalDemo)}</span>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          {t.yourGlobalDonations}{' '}
+          O teu total global em doações:{' '}
           <strong className="text-foreground">{formatCurrency(globalUserTotalEur)}</strong>
         </p>
       </div>
 
       <div>
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">{t.moreCharitiesToDiscover}</h3>
+          <h3 className="text-sm font-semibold">Mais instituições para descobrir</h3>
         </div>
         <div className="mt-3 flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {others.map((c) => (
@@ -1178,12 +1010,7 @@ function CharityDetail({
               onClick={() => onSelectCharity(c)}
               className="w-36 shrink-0 overflow-hidden rounded-xl border border-border text-left shadow-sm"
             >
-              {c.image ? (
-                <img src={c.image} alt={c.name} className="h-24 w-full object-cover" />
-              ) : (
-                <div className={cn('h-24 bg-gradient-to-br', c.gradient)} />
-              )}
-
+              <div className={cn('h-24 bg-gradient-to-br', c.gradient)} />
               <div className="p-2">
                 <p className="text-xs font-semibold leading-tight">{c.name}</p>
               </div>
@@ -1192,7 +1019,9 @@ function CharityDetail({
         </div>
       </div>
 
-      <p className="text-center text-[10px] text-muted-foreground">{t.demoValuesImpactWallet}</p>
+      <p className="text-center text-[10px] text-muted-foreground">
+        Valores demonstrativos · Impact Wallet
+      </p>
     </div>
   );
 }
@@ -1230,14 +1059,10 @@ function DiscountCard({
   offer,
   totalPoints,
   onRedeem,
-  t,
-  formatPoints,
 }: {
   offer: DiscountOffer;
   totalPoints: number;
   onRedeem: () => void;
-  t: Translations;
-  formatPoints: (n: number) => string;
 }) {
   const ok = totalPoints >= offer.costPoints;
 
@@ -1255,10 +1080,10 @@ function DiscountCard({
         <p className="flex-1 text-xs text-muted-foreground">{offer.description}</p>
         <div className="flex items-center gap-1 text-xs font-semibold text-amber-600">
           <Leaf className="h-3.5 w-3.5" />
-          {formatPoints(offer.costPoints)} {t.pointsShort}
+          {offer.costPoints} pts
         </div>
         <Button size="sm" className="w-full rounded-xl" disabled={!ok} onClick={onRedeem}>
-          {ok ? t.redeem : `${t.missing} ${formatPoints(offer.costPoints - totalPoints)} ${t.pointsShort}`}
+          {ok ? 'Resgatar' : `Faltam ${offer.costPoints - totalPoints} pts`}
         </Button>
       </div>
     </div>
@@ -1268,31 +1093,26 @@ function DiscountCard({
 function ContributionPanel({
   userTotalEur,
   formatCurrency,
-  formatNumber,
   onRefresh,
-  t,
 }: {
   userTotalEur: number;
   formatCurrency: (n: number) => string;
-  formatNumber: (n: number, options?: Intl.NumberFormatOptions) => string;
   onRefresh: () => void;
-  t: Translations;
 }) {
   const [allCampaignsOpen, setAllCampaignsOpen] = useState(false);
   const previewCount = 3;
   const campaignsPreview = COMPLETED_CAMPAIGNS.slice(0, previewCount);
   const campaignsRest = COMPLETED_CAMPAIGNS.slice(previewCount);
   const hasMoreCampaigns = campaignsRest.length > 0;
-  const formatPoints = makeFormatPoints(formatNumber);
 
   return (
     <section className="space-y-4">
       <div className="rounded-2xl border border-border bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-sm font-semibold">{t.contributionGlobal}</p>
+            <p className="text-sm font-semibold">Impacto global</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {formatNumber(MOCK_GLOBAL_CONTRIBUTORS)} {t.peopleContributed}
+              {MOCK_GLOBAL_CONTRIBUTORS.toLocaleString()} pessoas contribuíram
             </p>
           </div>
           <button
@@ -1300,7 +1120,7 @@ function ContributionPanel({
             className="text-xs font-medium text-sky-600 dark:text-sky-400"
             onClick={onRefresh}
           >
-            {t.refresh}
+            Atualizar
           </button>
         </div>
         <p className="mt-3 break-all text-2xl font-bold tabular-nums leading-tight">
@@ -1310,30 +1130,29 @@ function ContributionPanel({
 
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold">{t.yourContribution}</p>
+          <p className="text-sm font-semibold">A tua contribuição</p>
           <Users className="h-4 w-4 text-muted-foreground" />
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">{t.donatedByYouViaStore}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Total doado por ti (via Store)</p>
         <p className="mt-2 text-3xl font-bold tabular-nums">{formatCurrency(userTotalEur)}</p>
       </div>
 
       <div>
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold">{t.completedCampaigns}</h2>
+          <h2 className="text-sm font-semibold">Campanhas concluídas</h2>
           {hasMoreCampaigns && (
             <button
               type="button"
               onClick={() => setAllCampaignsOpen((o) => !o)}
               className="shrink-0 text-xs font-medium text-muted-foreground underline-offset-4 transition hover:text-foreground hover:underline"
             >
-              {allCampaignsOpen ? t.seeLess : t.seeAll}
+              {allCampaignsOpen ? 'ver menos' : 'ver tudo'}
             </button>
           )}
         </div>
-
         <div className="mt-3 space-y-2">
           {campaignsPreview.map((c) => (
-            <CompletedCampaignRow key={c.id} campaign={c} t={t} formatPoints={formatPoints} />
+            <CompletedCampaignRow key={c.id} campaign={c} />
           ))}
         </div>
 
@@ -1347,7 +1166,7 @@ function ContributionPanel({
             <div className="min-h-0 overflow-hidden">
               <div className="space-y-2 pt-2">
                 {campaignsRest.map((c) => (
-                  <CompletedCampaignRow key={c.id} campaign={c} t={t} formatPoints={formatPoints} />
+                  <CompletedCampaignRow key={c.id} campaign={c} />
                 ))}
               </div>
             </div>
@@ -1357,7 +1176,7 @@ function ContributionPanel({
 
       <div className="flex gap-2 rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">
         <Sparkles className="h-4 w-4 shrink-0 text-amber-500" />
-        {t.globalValuesDisclaimer}
+        Os valores globais são demonstrativos; o teu total é guardado neste dispositivo.
       </div>
     </section>
   );
