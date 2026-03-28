@@ -64,6 +64,51 @@ export function pointsToEuros(points: number) {
   return points / POINTS_PER_EURO;
 }
 
+/** Campanhas já terminadas (histórico) — usado na Store e em Contribuição. */
+export type CompletedCampaign = {
+  id: string;
+  name: string;
+  subtitle: string;
+  goalPoints: number;
+  raisedPoints: number;
+  completedLabel: string;
+};
+
+export const COMPLETED_CAMPAIGNS: CompletedCampaign[] = [
+  {
+    id: 'campaign-coimbra-2024',
+    name: 'Coimbra Solidária',
+    subtitle: 'Apoio a refeições escolares',
+    goalPoints: 80_000,
+    raisedPoints: 82_400,
+    completedLabel: 'Nov 2024',
+  },
+  {
+    id: 'campaign-floresta-2024',
+    name: 'Floresta Viva',
+    subtitle: 'Reflorestação no centro de Portugal',
+    goalPoints: 120_000,
+    raisedPoints: 125_000,
+    completedLabel: 'Set 2024',
+  },
+  {
+    id: 'campaign-costa-2024',
+    name: 'Costa Azul',
+    subtitle: 'Limpeza de praias e sensibilização',
+    goalPoints: 50_000,
+    raisedPoints: 53_200,
+    completedLabel: 'Jun 2024',
+  },
+  {
+    id: 'campaign-porto-2024',
+    name: 'Porto Respira',
+    subtitle: 'Qualidade do ar e mobilidade',
+    goalPoints: 90_000,
+    raisedPoints: 91_500,
+    completedLabel: 'Mar 2024',
+  },
+];
+
 export interface Charity {
   id: string;
   name: string;

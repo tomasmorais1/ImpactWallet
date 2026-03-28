@@ -10,6 +10,7 @@ import {
   Users,
   Share2,
   MapPin,
+  CheckCircle2,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
@@ -20,6 +21,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import impactPointsLogo from '../assets/impact-points-logo.png';
 import {
   CHARITIES,
+  COMPLETED_CAMPAIGNS,
   DISCOUNT_OFFERS,
   DONATION_EURO_AMOUNTS,
   LEIRIA_CAMPAIGN_ABOUT,
@@ -34,6 +36,7 @@ import {
   USER_DONATION_BY_CHARITY_KEY,
   USER_DONATION_TOTAL_KEY,
   type Charity,
+  type CompletedCampaign,
   type DiscountOffer,
   eurosToPoints,
   pointsToEuros,
@@ -69,6 +72,31 @@ function persistDonation(charityId: string, euroAmount: number) {
   const by = readDonationByCharity();
   by[charityId] = (by[charityId] || 0) + euroAmount;
   localStorage.setItem(USER_DONATION_BY_CHARITY_KEY, JSON.stringify(by));
+}
+
+function CompletedCampaignRow({ campaign }: { campaign: CompletedCampaign }) {
+  const pct = Math.min(100, (campaign.raisedPoints / campaign.goalPoints) * 100);
+  return (
+    <div className="rounded-xl border border-border bg-muted/30 p-3 dark:bg-zinc-900/40">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold leading-tight">{campaign.name}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{campaign.subtitle}</p>
+        </div>
+        <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-800 dark:text-emerald-300">
+          <CheckCircle2 className="h-3 w-3" aria-hidden />
+          Concluída
+        </span>
+      </div>
+      <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+        <span>
+          {campaign.raisedPoints.toLocaleString('pt-PT')} / {campaign.goalPoints.toLocaleString('pt-PT')} pts
+        </span>
+        <span>{campaign.completedLabel}</span>
+      </div>
+      <Progress value={pct} className="mt-1.5 h-1.5 bg-muted" indicatorClassName="bg-emerald-600 dark:bg-emerald-500" />
+    </div>
+  );
 }
 
 function LeiriaCampaignCard({ onOpen }: { onOpen: () => void }) {
@@ -130,8 +158,16 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
   const [recurring, setRecurring] = useState(false);
   const [userDonationEur, setUserDonationEur] = useState(readUserDonationEur);
   const [leiriaProgressKey, setLeiriaProgressKey] = useState(0);
+  const [pastCampaignsOpen, setPastCampaignsOpen] = useState(false);
 
   const refreshUserTotal = useCallback(() => setUserDonationEur(readUserDonationEur()), []);
+
+  const goToContributionCampanhas = useCallback(() => {
+    setPastCampaignsOpen(false);
+    setDetail(null);
+    setLeiriaDetailOpen(false);
+    setTab('contribution');
+  }, []);
 
   useEffect(() => {
     if (tab === 'contribution') refreshUserTotal();
@@ -222,6 +258,7 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
                 setTab(id);
                 setDetail(null);
                 setLeiriaDetailOpen(false);
+                if (id !== 'donations') setPastCampaignsOpen(false);
               }}
               className={cn(
                 'flex-1 rounded-xl py-2.5 text-center text-sm transition-all',
@@ -239,7 +276,25 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
       <div className="space-y-4 px-4 pt-4">
       {tab === 'donations' && !detail && !leiriaDetailOpen && (
         <section className="space-y-3">
-          <p className="text-sm text-muted-foreground">Campanha</p>
+          <button
+            type="button"
+            onClick={() => setPastCampaignsOpen((o) => !o)}
+            className="flex w-full items-center justify-between gap-2 rounded-lg py-0.5 text-left text-sm text-muted-foreground transition hover:text-foreground"
+          >
+            <span className="flex items-center gap-1.5 font-medium">
+              Campanhas
+              <span
+                className={cn(
+                  'inline-block font-mono text-sm text-muted-foreground/90 transition-transform duration-300 ease-out',
+                  pastCampaignsOpen && 'rotate-90',
+                )}
+                aria-hidden
+              >
+                &gt;
+              </span>
+            </span>
+          </button>
+
           <LeiriaCampaignCard
             key={leiriaProgressKey}
             onOpen={() => {
@@ -247,6 +302,30 @@ export function Store({ totalPoints, onRedeem }: StoreProps) {
               setLeiriaDetailOpen(true);
             }}
           />
+
+          <div
+            className={cn(
+              'grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none',
+              pastCampaignsOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+            )}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div className="space-y-2 pt-1">
+                {COMPLETED_CAMPAIGNS.slice(0, 2).map((c) => (
+                  <CompletedCampaignRow key={c.id} campaign={c} />
+                ))}
+                <div className="flex justify-center pt-0.5">
+                  <button
+                    type="button"
+                    onClick={goToContributionCampanhas}
+                    className="text-xs font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-400"
+                  >
+                    ver mais
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
           <p className="text-sm text-muted-foreground">Instituições de caridade</p>
           <div className="grid grid-cols-2 gap-3">
             {CHARITIES.map((c) => (
@@ -786,6 +865,12 @@ function ContributionPanel({
   formatCurrency: (n: number) => string;
   onRefresh: () => void;
 }) {
+  const [allCampaignsOpen, setAllCampaignsOpen] = useState(false);
+  const previewCount = 3;
+  const campaignsPreview = COMPLETED_CAMPAIGNS.slice(0, previewCount);
+  const campaignsRest = COMPLETED_CAMPAIGNS.slice(previewCount);
+  const hasMoreCampaigns = campaignsRest.length > 0;
+
   return (
     <section className="space-y-4">
       <div className="rounded-2xl border border-border bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-4">
@@ -812,6 +897,43 @@ function ContributionPanel({
         </div>
         <p className="mt-1 text-xs text-muted-foreground">Total doado por ti (via Store)</p>
         <p className="mt-2 text-3xl font-bold tabular-nums">{formatCurrency(userTotalEur)}</p>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold">Campanhas concluídas</h2>
+          {hasMoreCampaigns && (
+            <button
+              type="button"
+              onClick={() => setAllCampaignsOpen((o) => !o)}
+              className="shrink-0 text-xs font-medium text-muted-foreground underline-offset-4 transition hover:text-foreground hover:underline"
+            >
+              {allCampaignsOpen ? 'ver menos' : 'ver tudo'}
+            </button>
+          )}
+        </div>
+        <div className="mt-3 space-y-2">
+          {campaignsPreview.map((c) => (
+            <CompletedCampaignRow key={c.id} campaign={c} />
+          ))}
+        </div>
+
+        {hasMoreCampaigns && (
+          <div
+            className={cn(
+              'grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none',
+              allCampaignsOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+            )}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div className="space-y-2 pt-2">
+                {campaignsRest.map((c) => (
+                  <CompletedCampaignRow key={c.id} campaign={c} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2 rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">
