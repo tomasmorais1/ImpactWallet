@@ -5,8 +5,10 @@ import { FinanceInsights } from './FinanceInsights';
 import { FinanceMovements } from './FinanceMovements';
 import { CategorySpendingChart } from './CategorySpendingChart';
 import { SpendingByDayChart } from './SpendingByDayChart';
+import { BudgetSpendChart } from './BudgetSpendChart';
 
 interface FinanceScreenProps {
+  expenses: Expense[];
   thisMonthExpenses: Expense[];
   monthlyGoal: number;
   totalSpent: number;
@@ -16,6 +18,7 @@ interface FinanceScreenProps {
 }
 
 export function FinanceScreen({
+  expenses,
   thisMonthExpenses,
   monthlyGoal,
   totalSpent,
@@ -32,6 +35,8 @@ export function FinanceScreen({
           remainingBudget={remainingBudget}
           percentageUsed={percentageUsed}
         />
+
+        <BudgetSpendChart expenses={expenses} monthlyGoal={monthlyGoal} />
 
         <FinanceMovements expenses={thisMonthExpenses} onDeleteExpense={onDeleteExpense} previewCount={4} />
 

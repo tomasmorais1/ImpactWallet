@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { PointsDisplay } from './components/PointsDisplay';
 import { ScreenGradientLayout } from './components/ScreenGradientLayout';
 import { HomeBudgetPanel } from './components/HomeBudgetPanel';
+import { HomeActiveChallenges } from './components/HomeActiveChallenges';
+import { Achievements } from './components/Achievements';
 import { ImpactSnapshotSection } from './components/ImpactSnapshotSection';
 import { FinanceScreen } from './components/FinanceScreen';
 import { RecentTransactions } from './components/RecentTransactions';
@@ -9,7 +11,6 @@ import { Store } from './components/Store';
 import { ProfileScreen } from './components/ProfileScreen';
 import { Login } from './components/Login';
 import { Friends } from './components/Friends';
-import { Achievements } from './components/Achievements';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { Home, ShoppingBag, Wallet, Users, User } from 'lucide-react';
 import { Card, CardContent } from './components/ui/card';
@@ -231,7 +232,7 @@ function AppContent() {
           onAddPoints={() => setActiveTab('profile')}
           onMove={() => setActiveTab('social')}
           onData={() => setActiveTab('finance')}
-          onPremium={() => setActiveTab('premium')}
+          onAchievements={() => setActiveTab('achievements')}
         />
       </div>
       <div className="space-y-4 px-4 pb-6">
@@ -242,6 +243,7 @@ function AppContent() {
           remainingBudget={remainingBudget}
           percentageUsed={percentageUsed}
         />
+        <HomeActiveChallenges />
         <ImpactSnapshotSection expenses={expenses} />
         <RecentTransactions
           expenses={thisMonthExpenses}
@@ -252,45 +254,47 @@ function AppContent() {
   </ScreenGradientLayout>
 )}
 
-{/* 👉 PREMIUM (FORA DO HOME) */}
+        {activeTab === 'achievements' && (
+          <Achievements totalPoints={totalPoints} totalSaved={savedAmount} friendCount={friendCount} />
+        )}
+
         {activeTab === 'premium' && (
-  <div className="space-y-4 px-4 pt-4">
+          <div className="space-y-4 px-4 pt-4">
+            <Card className="border-0 bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+              <CardContent className="p-6 text-center">
+                <h2 className="mb-2 text-xl font-bold">Go Premium 🚀</h2>
+                <p className="text-sm opacity-90">Unlock the full power of Impact Wallet</p>
+              </CardContent>
+            </Card>
 
-    <Card className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0">
-      <CardContent className="p-6 text-center">
-        <h2 className="text-xl font-bold mb-2">Go Premium 🚀</h2>
-        <p className="text-sm opacity-90">
-          Unlock the full power of Impact Wallet
-        </p>
-      </CardContent>
-    </Card>
+            <Card>
+              <CardContent className="space-y-3 p-4 text-sm">
+                <p>✅ Advanced analytics</p>
+                <p>✅ Double reward points</p>
+                <p>✅ Exclusive discounts</p>
+                <p>✅ Priority support</p>
+              </CardContent>
+            </Card>
 
-    <Card>
-      <CardContent className="p-4 space-y-3 text-sm">
-        <p>✅ Advanced analytics</p>
-        <p>✅ Double reward points</p>
-        <p>✅ Exclusive discounts</p>
-        <p>✅ Priority support</p>
-      </CardContent>
-    </Card>
+            <Card>
+              <CardContent className="space-y-3 p-6 text-center">
+                <p className="text-2xl font-bold">19,99€ / month</p>
 
-    <Card>
-      <CardContent className="p-6 text-center space-y-3">
-        <p className="text-2xl font-bold">19,99€ / month</p>
+                <button
+                  type="button"
+                  onClick={() => alert('Premium activated!')}
+                  className="w-full rounded-xl bg-emerald-600 py-3 text-white hover:bg-emerald-700"
+                >
+                  Upgrade Now
+                </button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-        <button
-          onClick={() => alert('Premium activated!')}
-          className="w-full bg-emerald-600 text-white py-3 rounded-xl hover:bg-emerald-700"
-        >
-          Upgrade Now
-        </button>
-      </CardContent>
-    </Card>
-
-  </div>
-)}
         {activeTab === 'finance' && (
           <FinanceScreen
+            expenses={expenses}
             thisMonthExpenses={thisMonthExpenses}
             monthlyGoal={monthlyGoal}
             totalSpent={totalSpent}
