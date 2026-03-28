@@ -343,6 +343,13 @@ const handleBuyPoints = (points: number, euroAmount: number) => {
                   percentageUsed={percentageUsed}
                 />
 
+                <BudgetTracker
+                  monthlyGoal={monthlyGoal}
+                  totalSpent={totalSpent}
+                  remainingBudget={remainingBudget}
+                  percentageUsed={percentageUsed}
+                />
+
                 <ImpactSnapshotSection expenses={expenses} />
 
                 <RecentTransactions
